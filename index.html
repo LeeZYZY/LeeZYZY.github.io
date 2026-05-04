@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trading Journal</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg: #0a0d12;
@@ -145,12 +146,8 @@
       background: linear-gradient(90deg, var(--accent2), transparent);
     }
 
-    .report-card.tool::before {
-      background: linear-gradient(90deg, var(--gold), transparent);
-    }
-
-    .report-card.tool:hover {
-      border-color: var(--gold);
+    .report-card.pdf:hover {
+      border-color: var(--accent2);
     }
 
     .report-date {
@@ -175,33 +172,6 @@
       margin-bottom: 18px;
     }
 
-    .kpis {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .mini-kpi {
-      background: rgba(10,13,18,.55);
-      border: 1px solid rgba(30,39,56,.8);
-      border-radius: 10px;
-      padding: 12px 10px;
-    }
-
-    .mini-label {
-      font-size: 10px;
-      color: var(--text2);
-      margin-bottom: 6px;
-    }
-
-    .mini-value {
-      font-family: 'DM Mono', monospace;
-      font-size: 15px;
-      color: var(--accent);
-      font-weight: 500;
-    }
-
     .tag-row {
       display: flex;
       flex-wrap: wrap;
@@ -215,6 +185,94 @@
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 4px 9px;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 14px;
+    }
+
+    .tool-icon-card {
+      text-decoration: none;
+      color: inherit;
+      background: rgba(22,28,40,.72);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      min-height: 112px;
+      padding: 16px 10px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+
+    .tool-icon-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold);
+      background: #1a2032;
+    }
+
+    .tool-icon-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 18%;
+      right: 18%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: .9;
+    }
+
+    .tool-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: rgba(245,158,11,.10);
+      border: 1px solid rgba(245,158,11,.28);
+      color: var(--gold);
+      font-size: 24px;
+      line-height: 1;
+      box-shadow: 0 0 20px rgba(245,158,11,.05);
+    }
+
+    .tool-name {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 11px;
+      color: #fff;
+      line-height: 1.25;
+    }
+
+    .tool-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text2);
+      line-height: 1.2;
+    }
+
+    .tool-icon-card.placeholder {
+      cursor: default;
+      opacity: .48;
+      border-style: dashed;
+    }
+
+    .tool-icon-card.placeholder:hover {
+      transform: none;
+      border-color: var(--border);
+      background: rgba(22,28,40,.72);
+    }
+
+    .tool-icon-card.placeholder .tool-icon {
+      color: var(--text2);
+      border-color: var(--border);
+      background: rgba(10,13,18,.55);
     }
 
     .empty {
@@ -237,8 +295,19 @@
     }
 
     @media (max-width: 700px) {
-      .kpis {
-        grid-template-columns: 1fr;
+      .tool-grid {
+        grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+      }
+
+      .tool-icon-card {
+        min-height: 104px;
+        padding: 14px 8px 12px;
+      }
+
+      .tool-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 22px;
       }
     }
   </style>
@@ -257,8 +326,8 @@
     <div class="section-title">Reports</div>
 
     <section class="report-grid">
-      <a class="report-card" href="reports.html">
-        <div class="report-date">AUTO LIST</div>
+      <a class="report-card" href="reports.html" onclick="return protectedNavigate('reports.html')">
+        <div class="report-date">AUTO LIST · LOCKED</div>
         <div class="report-title">HTMLレポート一覧</div>
 
         <p class="report-desc">
@@ -268,7 +337,7 @@
         <div class="tag-row">
           <span class="tag">HTML</span>
           <span class="tag">weekly report</span>
-          <span class="tag">auto index</span>
+          <span class="tag">password</span>
         </div>
       </a>
     </section>
@@ -276,8 +345,8 @@
     <div class="section-title">PDF Archive</div>
 
     <section class="report-grid">
-      <a class="report-card pdf" href="pdfs.html">
-        <div class="report-date">AUTO LIST</div>
+      <a class="report-card pdf" href="pdfs.html" onclick="return protectedNavigate('pdfs.html')">
+        <div class="report-date">AUTO LIST · LOCKED</div>
         <div class="report-title">PDFファイル一覧</div>
 
         <p class="report-desc">
@@ -287,28 +356,25 @@
         <div class="tag-row">
           <span class="tag">PDF</span>
           <span class="tag">archive</span>
-          <span class="tag">auto index</span>
+          <span class="tag">password</span>
         </div>
       </a>
     </section>
 
     <div class="section-title">Tools</div>
 
-    <section class="report-grid">
-      <a class="report-card tool" href="clock.html">
-        <div class="report-date">TOOLS</div>
-        <div class="report-title">Trading Clock</div>
-
-        <p class="report-desc">
-          1分足 / 5分足 / 15分足の残り時間、ロンドン・ニューヨーク・香港時間を表示するトレード用時計。
-        </p>
-
-        <div class="tag-row">
-          <span class="tag">clock</span>
-          <span class="tag">countdown</span>
-          <span class="tag">tool</span>
-        </div>
+    <section class="tool-grid">
+      <a class="tool-icon-card" href="clock.html" title="Trading Clock">
+        <div class="tool-icon">⏱</div>
+        <div class="tool-name">Clock</div>
+        <div class="tool-sub">Candle Timer</div>
       </a>
+
+      <div class="tool-icon-card placeholder" title="Add more tools later">
+        <div class="tool-icon">＋</div>
+        <div class="tool-name">Next Tool</div>
+        <div class="tool-sub">Coming</div>
+      </div>
     </section>
 
     <div class="section-title">Next</div>
@@ -316,11 +382,27 @@
     <div class="empty">
       新しいHTMLレポートを追加するときは <strong>reports/YYYY-WW.html</strong> に保存すれば、<strong>reports.html</strong> に自動表示されます。<br>
       PDFを追加するときは <strong>pdfs/</strong> フォルダにアップロードすれば、<strong>pdfs.html</strong> に自動表示されます。<br>
-      ツールを追加するときは <strong>clock.html</strong> のようにルート直下にHTMLファイルを置き、このトップページにカードを追加します。<br>
-      例：<strong>reports/2026-W19.html</strong>、<strong>pdfs/2026-W19-report.pdf</strong>
+      ツールを追加するときは <strong>clock.html</strong> のようにルート直下にHTMLファイルを置き、このトップページの <strong>Tools</strong> に小さなアイコンを追加します。<br>
+      例：<strong>reports/2026-W19.html</strong>、<strong>pdfs/2026-W19-report.pdf</strong>、<strong>risk.html</strong>
     </div>
 
     <div class="footer">Generated for GitHub Pages · Static HTML archive</div>
   </main>
+
+  <script>
+    const ACCESS_PASSWORD = "ioden";
+
+    function protectedNavigate(targetUrl) {
+      const input = prompt("Password:");
+
+      if (input === ACCESS_PASSWORD) {
+        window.location.href = targetUrl;
+      } else if (input !== null) {
+        alert("Password incorrect.");
+      }
+
+      return false;
+    }
+  </script>
 </body>
 </html>
