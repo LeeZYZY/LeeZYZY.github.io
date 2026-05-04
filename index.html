@@ -19,7 +19,11 @@
       --gold: #f59e0b;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       background: var(--bg);
@@ -71,7 +75,9 @@
       margin-bottom: 18px;
     }
 
-    h1 span { color: var(--accent); }
+    h1 span {
+      color: var(--accent);
+    }
 
     .lead {
       color: var(--text2);
@@ -128,13 +134,23 @@
     .report-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       height: 2px;
       background: linear-gradient(90deg, var(--accent), transparent);
     }
 
     .report-card.pdf::before {
       background: linear-gradient(90deg, var(--accent2), transparent);
+    }
+
+    .report-card.tool::before {
+      background: linear-gradient(90deg, var(--gold), transparent);
+    }
+
+    .report-card.tool:hover {
+      border-color: var(--gold);
     }
 
     .report-date {
@@ -240,8 +256,6 @@
 
     <div class="section-title">Reports</div>
 
-    <div class="section-title">Reports</div>
-
     <section class="report-grid">
       <a class="report-card" href="reports.html">
         <div class="report-date">AUTO LIST</div>
@@ -276,7 +290,12 @@
           <span class="tag">auto index</span>
         </div>
       </a>
-      <a class="report-card" href="clock.html">
+    </section>
+
+    <div class="section-title">Tools</div>
+
+    <section class="report-grid">
+      <a class="report-card tool" href="clock.html">
         <div class="report-date">TOOLS</div>
         <div class="report-title">Trading Clock</div>
 
@@ -295,8 +314,9 @@
     <div class="section-title">Next</div>
 
     <div class="empty">
-      新しいHTMLレポートを追加するときは <strong>reports/YYYY-WW.html</strong> に保存し、このトップページにカードを1枚追加します。<br>
+      新しいHTMLレポートを追加するときは <strong>reports/YYYY-WW.html</strong> に保存すれば、<strong>reports.html</strong> に自動表示されます。<br>
       PDFを追加するときは <strong>pdfs/</strong> フォルダにアップロードすれば、<strong>pdfs.html</strong> に自動表示されます。<br>
+      ツールを追加するときは <strong>clock.html</strong> のようにルート直下にHTMLファイルを置き、このトップページにカードを追加します。<br>
       例：<strong>reports/2026-W19.html</strong>、<strong>pdfs/2026-W19-report.pdf</strong>
     </div>
 
