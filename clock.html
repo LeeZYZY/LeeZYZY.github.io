@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Clock</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@300;400;500&family=Unbounded:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black:#000; --bg:#030505; --border:#102326; --border-soft:#0A1719;
+      --text-soft:#7F9EA3; --time:#9FE7DD; --second:#B8F1EA; --date:#86CFC8;
+      --market-name:#7F9CB8; --market-time:#A7C8EA; --market-border:#17293A;
+      --on-bg:#0C1F20; --off-bg:#080B0C; --on-fg:#A8DFD8; --off-fg:#526B70;
+      --sun:#F4D27A; --moon:#AFC7E8;
+      --flash-bg:#2B200C; --flash-border:#B6882E; --flash-fg:#FFE1A0;
+      --font-ui:"Noto Sans JP","Segoe UI",sans-serif;
+      --font-mono:"DM Mono","Consolas",monospace;
+      --font-title:"Unbounded","Noto Sans JP",sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{min-height:100%;background:#000;color:var(--time);font-family:var(--font-ui)}
+    body{min-height:100vh;display:grid;place-items:center;padding:18px;overflow-x:hidden}
+    body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(159,231,221,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(159,231,221,.025) 1px,transparent 1px);background-size:36px 36px;pointer-events:none;z-index:0}
+    .shell{position:relative;z-index:1;width:min(600px,100%);min-height:480px;background:#000;border-radius:14px;padding:10px;box-shadow:0 0 0 1px rgba(16,35,38,.9),0 24px 80px rgba(0,0,0,.55)}
+    .card{min-height:460px;background:var(--bg);border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+    .top{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:8px;position:relative}
+    .app-title{font-size:clamp(7px,1.5vw,9px);font-weight:700;letter-spacing:.08em;color:var(--text-soft);margin-bottom:1px}
+    .date{font-size:clamp(18px,4.2vw,24px);font-weight:700;color:var(--date);line-height:1.15}
+    .icon{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);font-family:"Segoe UI Symbol","Noto Sans JP",sans-serif;font-size:clamp(16px,3.2vw,22px);line-height:1;user-select:none}
+    .corner{grid-column:3;justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+    .local{font-size:clamp(7px,1.5vw,8px);font-weight:700;letter-spacing:.08em;color:var(--time);background:#071315;border:1px solid var(--border);padding:3px 8px;border-radius:2px}
+    .markets{border:1px solid var(--market-border);padding:4px 6px;display:grid;gap:1px;min-width:92px}
+    .market-row{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:6px}
+    .market-name{text-align:right;font-size:clamp(7px,1.5vw,8px);font-weight:700;color:var(--market-name)}
+    .market-value{text-align:right;font-family:var(--font-mono);font-size:clamp(9px,2vw,11px);font-weight:700;color:var(--market-time)}
+    .time-panel{flex:1;min-height:210px;display:grid;place-items:center;background:#000;border:1px solid #061617;margin:6px 0;overflow:hidden;border-radius:4px}
+    .time-row{display:flex;align-items:baseline;justify-content:center;font-family:var(--font-mono);line-height:.9;white-space:nowrap;letter-spacing:-.08em}
+    .time-main,.time-colon,.time-sec{font-size:clamp(58px,18vw,110px);font-weight:700;color:var(--time);text-shadow:0 0 20px rgba(159,231,221,.08)}
+    .time-colon,.time-sec{color:var(--second)}
+    .seconds-off .time-colon,.seconds-off .time-sec{display:none}
+    .bottom{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:stretch}
+    .week{min-width:102px;display:grid;place-items:center;background:#071214;border:1px solid #1D3435;padding:4px 12px;border-radius:4px}
+    .week-title{font-size:clamp(7px,1.5vw,8px);font-weight:700;color:var(--text-soft);letter-spacing:.08em}
+    .weekday{font-size:clamp(22px,5vw,30px);font-weight:700;color:var(--date);line-height:1.1}
+    .count-panel{min-width:0;display:flex;flex-direction:column;gap:2px}
+    .count-head{font-size:clamp(7px,1.5vw,8px);font-weight:700;color:var(--text-soft);letter-spacing:.08em;padding-left:6px}
+    .count-area{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .count-box{border:1px solid;border-radius:4px;padding:5px 4px 6px;text-align:center;transition:background .12s,border-color .12s}
+    .count-title{font-size:clamp(8px,1.7vw,9px);font-weight:700;line-height:1.2}
+    .count-value{font-family:var(--font-mono);font-size:clamp(18px,4.4vw,25px);font-weight:700;line-height:1.2}
+    .count-box[data-name="1M"]{background:#071312;border-color:#14302E}.count-box[data-name="1M"] .count-title{color:#78B9AF}.count-box[data-name="1M"] .count-value{color:#A6E6D7}
+    .count-box[data-name="5M"]{background:#080F1A;border-color:#172A45}.count-box[data-name="5M"] .count-title{color:#89A9D0}.count-box[data-name="5M"] .count-value{color:#B7D4FF}
+    .count-box[data-name="15M"]{background:#131006;border-color:#332A11}.count-box[data-name="15M"] .count-title{color:#C3A96F}.count-box[data-name="15M"] .count-value{color:#E7D19A}
+    .count-box.highlight[data-name="1M"]{background:#0D2924;border-color:#2D7A69}.count-box.highlight[data-name="1M"] .count-title{color:#B9F1DF}.count-box.highlight[data-name="1M"] .count-value{color:#D2FFF0}
+    .count-box.highlight[data-name="5M"]{background:#111D36;border-color:#456AA4}.count-box.highlight[data-name="5M"] .count-title{color:#C7DAFF}.count-box.highlight[data-name="5M"] .count-value{color:#E0EAFF}
+    .count-box.highlight[data-name="15M"]{background:#241C08;border-color:#8A6A23}.count-box.highlight[data-name="15M"] .count-title{color:#F0DFAE}.count-box.highlight[data-name="15M"] .count-value{color:#FFF0BC}
+    .count-box.flash{background:var(--flash-bg)!important;border-color:var(--flash-border)!important}.count-box.flash .count-title,.count-box.flash .count-value{color:var(--flash-fg)!important}
+    .count-box.flash-off{background:#070504!important;border-color:#8A6725!important}.count-box.flash-off .count-title,.count-box.flash-off .count-value{color:var(--flash-fg)!important}
+    .controls{display:flex;align-items:center;gap:8px;margin-top:2px}
+    button{appearance:none;border:0;border-radius:4px;padding:7px 11px;cursor:pointer;font-family:var(--font-ui);font-size:clamp(8px,1.9vw,9px);font-weight:700;transition:transform .15s,background .15s,color .15s}button:hover{transform:translateY(-1px)}
+    .toggle.on{background:var(--on-bg);color:var(--on-fg)}.toggle.off{background:var(--off-bg);color:var(--off-fg)}
+    .help{color:var(--text-soft);font-size:clamp(8px,1.9vw,9px);margin-left:4px;white-space:nowrap}.spacer{flex:1}.action{background:#0B1718;color:var(--on-fg)}
+    .note{position:fixed;left:16px;bottom:12px;z-index:2;color:rgba(127,158,163,.35);font-family:var(--font-mono);font-size:10px;user-select:none}
+    @media(max-width:560px){body{padding:8px}.shell{min-height:450px}.card{min-height:430px}.top{grid-template-columns:1fr auto}.icon{top:20px}.corner{grid-column:2}.bottom{grid-template-columns:1fr}.week{display:none}.count-area{gap:6px}.controls{flex-wrap:wrap}.spacer{display:none}.action,.toggle{flex:1}}
+    @media(min-width:900px){.shell.large{width:min(920px,96vw);min-height:620px}.shell.large .card{min-height:600px}.shell.large .time-main,.shell.large .time-colon,.shell.large .time-sec{font-size:clamp(110px,15vw,170px)}.shell.large .count-value{font-size:clamp(30px,4vw,42px)}}
+  </style>
+</head>
+<body>
+  <main class="shell" id="shell">
+    <section class="card">
+      <header class="top">
+        <div>
+          <div class="app-title">TRADING CLOCK</div>
+          <div class="date" id="date">Jan 1, 2026</div>
+        </div>
+        <div class="icon" id="icon">☾</div>
+        <div class="corner">
+          <div class="local">LOCAL</div>
+          <div class="markets" id="markets">
+            <div class="market-row"><div class="market-name">LDN</div><div class="market-value" id="ldn">00:00</div></div>
+            <div class="market-row"><div class="market-name">NY</div><div class="market-value" id="ny">00:00</div></div>
+            <div class="market-row"><div class="market-name">HK</div><div class="market-value" id="hk">00:00</div></div>
+          </div>
+        </div>
+      </header>
+      <section class="time-panel">
+        <div class="time-row" id="timeRow"><span class="time-main" id="mainTime">00:00</span><span class="time-colon">:</span><span class="time-sec" id="secTime">00</span></div>
+      </section>
+      <section class="bottom">
+        <aside class="week"><div class="week-title">DAY</div><div class="weekday" id="weekday">MON</div></aside>
+        <section class="count-panel">
+          <div class="count-head">CANDLE COUNTDOWN</div>
+          <div class="count-area">
+            <article class="count-box" data-name="1M" id="box1"><div class="count-title">1M</div><div class="count-value" id="count1">01:00</div></article>
+            <article class="count-box" data-name="5M" id="box5"><div class="count-title">5M</div><div class="count-value" id="count5">05:00</div></article>
+            <article class="count-box" data-name="15M" id="box15"><div class="count-title">15M</div><div class="count-value" id="count15">15:00</div></article>
+          </div>
+        </section>
+      </section>
+      <footer class="controls">
+        <button class="toggle on" id="secondsBtn">SECONDS ON</button>
+        <button class="toggle on" id="marketsBtn">MARKETS ON</button>
+        <button class="toggle off" id="largeBtn">LARGE OFF</button>
+        <span class="help">10s高亮 / 3s闪烁</span>
+        <span class="spacer"></span>
+        <button class="action" id="popBtn">POP OUT</button>
+        <button class="action" id="fullBtn">FULL</button>
+      </footer>
+    </section>
+  </main>
+  <div class="note">Local system time · GitHub Pages web version</div>
+  <script>
+    const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const WEEKDAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+    const state={seconds:true,markets:true,large:false};
+    const $=id=>document.getElementById(id);
+    const e={shell:$('shell'),date:$('date'),icon:$('icon'),markets:$('markets'),ldn:$('ldn'),ny:$('ny'),hk:$('hk'),timeRow:$('timeRow'),main:$('mainTime'),sec:$('secTime'),weekday:$('weekday'),c1:$('count1'),c5:$('count5'),c15:$('count15'),b1:$('box1'),b5:$('box5'),b15:$('box15'),secondsBtn:$('secondsBtn'),marketsBtn:$('marketsBtn'),largeBtn:$('largeBtn'),popBtn:$('popBtn'),fullBtn:$('fullBtn')};
+    const pad=n=>String(n).padStart(2,'0');
+    function mmss(s){return `${pad(Math.floor(s/60))}:${pad(s%60)}`}
+    function secondsUntil(now,min){const p=min*60;const day=now.getHours()*3600+now.getMinutes()*60+now.getSeconds()+now.getMilliseconds()/1000;return Math.max(0,Math.ceil((Math.floor(day/p)+1)*p-day))}
+    function lastSunday(year,monthIndex){const d=new Date(Date.UTC(year,monthIndex+1,0));while(d.getUTCDay()!==0)d.setUTCDate(d.getUTCDate()-1);return d}
+    function nthSunday(year,monthIndex,nth){const d=new Date(Date.UTC(year,monthIndex,1));while(d.getUTCDay()!==0)d.setUTCDate(d.getUTCDate()+1);d.setUTCDate(d.getUTCDate()+7*(nth-1));return d}
+    function isLondonDst(u){const y=u.getUTCFullYear();const s=lastSunday(y,2);s.setUTCHours(1,0,0,0);const end=lastSunday(y,9);end.setUTCHours(1,0,0,0);return u>=s&&u<end}
+    function isNyDst(u){const y=u.getUTCFullYear();const s=nthSunday(y,2,2);s.setUTCHours(7,0,0,0);const end=nthSunday(y,10,1);end.setUTCHours(6,0,0,0);return u>=s&&u<end}
+    function market(u,off){const t=new Date(u.getTime()+off*3600*1000);return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}`}
+    function updateMarkets(){const u=new Date();e.ldn.textContent=market(u,isLondonDst(u)?1:0);e.ny.textContent=market(u,isNyDst(u)?-4:-5);e.hk.textContent=market(u,8)}
+    function setMode(box,sec,th){box.classList.remove('highlight','flash','flash-off');if(sec<=3)box.classList.add(new Date().getMilliseconds()<500?'flash':'flash-off');else if(sec<=th)box.classList.add('highlight')}
+    function updateIcon(now){if(now.getHours()>=6&&now.getHours()<18){e.icon.textContent='☀';e.icon.style.color='var(--sun)';e.icon.style.filter='drop-shadow(0 0 8px rgba(244,210,122,.24))'}else{e.icon.textContent='☾';e.icon.style.color='var(--moon)';e.icon.style.filter='drop-shadow(0 0 8px rgba(175,199,232,.20))'}}
+    function tick(){const n=new Date();updateIcon(n);e.date.textContent=`${MONTHS[n.getMonth()]} ${n.getDate()}, ${n.getFullYear()}`;e.main.textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}`;e.sec.textContent=pad(n.getSeconds());e.weekday.textContent=WEEKDAYS[(n.getDay()+6)%7].toUpperCase();const one=secondsUntil(n,1),five=secondsUntil(n,5),fifteen=secondsUntil(n,15);e.c1.textContent=mmss(one);e.c5.textContent=mmss(five);e.c15.textContent=mmss(fifteen);setMode(e.b1,one,10);setMode(e.b5,five,60);setMode(e.b15,fifteen,60);updateMarkets();requestAnimationFrame(tick)}
+    function setBtn(btn,on,onText,offText){btn.textContent=on?onText:offText;btn.classList.toggle('on',on);btn.classList.toggle('off',!on)}
+    function refresh(){setBtn(e.secondsBtn,state.seconds,'SECONDS ON','SECONDS OFF');setBtn(e.marketsBtn,state.markets,'MARKETS ON','MARKETS OFF');setBtn(e.largeBtn,state.large,'LARGE ON','LARGE OFF');e.timeRow.classList.toggle('seconds-off',!state.seconds);e.markets.style.display=state.markets?'grid':'none';e.shell.classList.toggle('large',state.large)}
+    e.secondsBtn.onclick=()=>{state.seconds=!state.seconds;refresh()};
+    e.marketsBtn.onclick=()=>{state.markets=!state.markets;refresh()};
+    e.largeBtn.onclick=()=>{state.large=!state.large;refresh()};
+    e.fullBtn.onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen().catch(()=>{});else await document.exitFullscreen().catch(()=>{})};
+    e.popBtn.onclick=()=>window.open(location.href,'TradingClockPopout','width=640,height=520,left=1100,top=500,resizable=yes,scrollbars=no');
+    document.addEventListener('keydown',async ev=>{if(ev.key==='F11'){ev.preventDefault();if(!document.fullscreenElement)await document.documentElement.requestFullscreen().catch(()=>{});else await document.exitFullscreen().catch(()=>{})}if(ev.key==='Escape'&&document.fullscreenElement)await document.exitFullscreen().catch(()=>{})});
+    refresh();tick();
+  </script>
+</body>
+</html>
