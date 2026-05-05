@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -97,11 +97,11 @@
 
   <div class="panel">
     <div class="row">
-      <label>1分足 CSV/TSV</label>
+      <label>1-min CSV/TSV</label>
       <input id="csvFile" type="file" accept=".csv,.tsv,.txt" />
     </div>
     <div class="row">
-      <label>取引履歴 Excel</label>
+      <label>Trade History Excel</label>
       <input id="xlsxFile" type="file" accept=".xlsx,.xls" />
     </div>
     <div class="row">
@@ -110,8 +110,8 @@
       <div class="meta" id="status" style="margin-left:auto;text-align:right;"></div>
     </div>
     <div class="meta">
-      Crosshair：左上角开关（快捷键 <b>C</b> 切换 / <b>Esc</b> 关闭）<br/>
-      <span class="warn">注意：需要联网加载 Plotly / xlsx / papaparse CDN。</span>
+      Crosshair: toggle in the top-left corner. Shortcut: <b>C</b> to toggle / <b>Esc</b> to close.<br/>
+      <span class="warn">Note: an internet connection is required to load Plotly / xlsx / papaparse from CDN.</span>
     </div>
   </div>
 
@@ -149,13 +149,13 @@
     return new Date(Math.floor(d.getTime() / 60000) * 60000);
   }
 
-  // 强健日期解析：支持 YYYY.MM.DD HH:mm:ss / 12/24/2025 11:43 等
+  // Robust date parser: supports YYYY.MM.DD HH:mm:ss / 12/24/2025 11:43, etc.
   function parseAnyDate(v) {
     if (v instanceof Date) return v;
 
     // Excel serial date
     if (typeof v === 'number' && isFinite(v)) {
-      const epoch = new Date(1899, 11, 30).getTime(); // 本地时间基准
+      const epoch = new Date(1899, 11, 30).getTime(); // local-time base
       return new Date(epoch + v * 86400000);
     }
 
@@ -201,7 +201,7 @@
 
     const text = await f.text();
 
-    // 自动猜分隔符（优先 tab）
+    // Auto-detect delimiter, preferring tab
     const firstLine = text.split(/\r?\n/)[0] || '';
     let delim = "\t";
     if (firstLine.includes("\t")) delim = "\t";
@@ -224,7 +224,7 @@
     const fields = parsed.meta && parsed.meta.fields ? parsed.meta.fields : [];
 
     if (parsed.errors && parsed.errors.length) {
-      alert('CSV/TSV 解析失败：' + parsed.errors[0].message);
+      alert('CSV/TSV parse failed: ' + parsed.errors[0].message);
       return;
     }
 
@@ -232,8 +232,8 @@
 
     if (!rows.length || !requireColumns(rows[0], ['Time (Asia/Tokyo)','Open','High','Low','Close'])) {
       alert(
-        '列不匹配：需要 Time (Asia/Tokyo), Open, High, Low, Close\n' +
-        '实际读到的列名是：\n' + fields.join(' | ')
+        'Column mismatch: required columns are Time (Asia/Tokyo), Open, High, Low, Close\n' +
+        'Detected columns:\n' + fields.join(' | ')
       );
       return;
     }
@@ -258,14 +258,14 @@
     const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
 
     if (!rows.length) {
-      alert('Excel 为空或无法读取。');
+      alert('Excel is empty or could not be read.');
       return;
     }
 
     const needed = ['約定日時','約定レート','売買','区分','決済損益（円）'];
     const ok = needed.every(k => Object.prototype.hasOwnProperty.call(rows[0], k));
     if (!ok) {
-      alert('Excel 列不匹配：需要 約定日時, 約定レート, 売買, 区分, 決済損益（円）');
+      alert('Excel column mismatch: required columns are 約定日時, 約定レート, 売買, 区分, 決済損益（円）');
       return;
     }
 
@@ -292,7 +292,7 @@
     }
 
     if (t.length === 0) {
-      alert("没有解析出任何K线：请确认文件分隔符与表头，并且时间格式如 2025.12.22 07:00:00");
+      alert("No candle data could be parsed. Please check the delimiter, headers, and time format, for example 2025.12.22 07:00:00.");
       return { data: [], layout: {} };
     }
 
@@ -315,8 +315,8 @@
       .map(r => ({
         dt: parseAnyDate(r['約定日時']),
         price: toNumber(r['約定レート']),
-        side: String(r['売買']).trim(),   // 買 / 売
-        kind: String(r['区分']).trim(),   // 新規 / 決済
+        side: String(r['売買']).trim(),   // Buy / Sell
+        kind: String(r['区分']).trim(),   // Entry / Exit
         pnl:  toNumber(r['決済損益（円）'])
       }))
       .filter(r => !isNaN(r.dt.getTime()) && isFinite(r.price))
@@ -334,7 +334,7 @@
         const exit_ = r;
 
         const pnl_value = isFinite(exit_.pnl) ? exit_.pnl : 0;
-        const hover_msg = `<span style='color:white'>損益: ${pnl_value} 円</span>`;
+        const hover_msg = `<span style='color:white'>PnL: ${pnl_value} JPY</span>`;
 
         const entry_symbol = (entry.side === '買') ? 'arrow-up' : 'arrow-down';
         const entry_color  = (entry.side === '買') ? 'orange' : 'royalblue';
@@ -412,7 +412,7 @@
   }
 
   // ----------------------------
-  // Keyboard (C / ESC)  ✅不被 file input 吃掉
+  // Keyboard shortcuts (C / ESC). Keep file inputs from stealing these shortcuts.
   // ----------------------------
   function isTypingTarget(el){
     if(!el) return false;
@@ -441,10 +441,10 @@
   });
 
   // ----------------------------
-  // Crosshair overlay (HTML) ✅稳定显示十字线 + x/y 值
+  // Crosshair overlay (HTML): stable crosshair display with x/y labels
   // ----------------------------
   function installCrosshairOverlay(gd) {
-    // Plotly.newPlot 会清空 div 内容，所以每次 render 后都重装 overlay
+    // Plotly.newPlot clears the div, so reinstall the overlay after every render.
     gd.style.position = gd.style.position || 'relative';
 
     const old = gd.querySelector('.ch-overlay');
@@ -471,7 +471,7 @@
     overlay.appendChild(yLabel);
     gd.appendChild(overlay);
 
-    // 防重复：移除旧监听
+    // Remove old listeners to avoid duplicates
     if (gd.__ch_move) gd.removeEventListener('mousemove', gd.__ch_move, true);
     if (gd.__ch_leave) gd.removeEventListener('mouseleave', gd.__ch_leave, true);
     if (gd.__ch_change) crosshairCB.removeEventListener('change', gd.__ch_change);
@@ -503,7 +503,7 @@
 
       const size = full._size;
 
-      // clamp 到绘图区（即使在边距/轴上也显示）
+      // Clamp to plot area, even when hovering over margins/axes
       let xPlot = xPx - size.l;
       let yPlot = yPx - size.t;
       xPlot = Math.max(0, Math.min(size.w, xPlot));
@@ -562,7 +562,7 @@
       gd.style.cursor = on ? 'crosshair' : 'default';
       overlay.style.display = on ? 'block' : 'none';
 
-      // 开启时关闭 Plotly tooltip，关闭时恢复
+      // Disable Plotly tooltip while crosshair is on, restore it when off
       Plotly.relayout(gd, { hovermode: on ? false : 'closest' });
 
       if (!on) hide();
@@ -576,7 +576,7 @@
     gd.__ch_leave = onLeave;
     gd.__ch_change = onToggle;
 
-    // 初始状态同步
+    // Sync initial state
     onToggle();
   }
 
@@ -584,8 +584,8 @@
   // Render / Clear
   // ----------------------------
   renderBtn.addEventListener('click', async () => {
-    if (!candleRows) { alert('请先上传 1分足 CSV/TSV'); return; }
-    if (!tradeRows)  { alert('请先上传 取引履歴 Excel'); return; }
+    if (!candleRows) { alert('Please upload the 1-min candle CSV/TSV first.'); return; }
+    if (!tradeRows)  { alert('Please upload the trade history Excel file first.'); return; }
 
     const fig = buildFigure(candleRows, tradeRows);
 
@@ -598,7 +598,7 @@
     await Plotly.newPlot('plot', fig.data, fig.layout, config);
     const gd = document.getElementById('plot');
 
-    // ✅每次 newPlot 后都要重装（newPlot 会清空 div）
+    // Reinstall after every newPlot call, because newPlot clears the div.
     installCrosshairOverlay(gd);
 
     setStatus();
