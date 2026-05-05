@@ -8,6 +8,9 @@
   <!-- TradingView Lightweight Charts -->
   <script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
 
+  <!-- Excel parser for trade history -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <style>
     :root {
       --bg: #05070b;
@@ -253,6 +256,59 @@
       font-weight: 700;
     }
 
+
+    .file-input {
+      display: none;
+    }
+
+    .file-button {
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 8px;
+      border: 1px solid rgba(245,158,11,0.35);
+      background: rgba(245,158,11,0.10);
+      color: var(--gold);
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, transform .15s ease;
+      white-space: nowrap;
+    }
+
+    .file-button:hover {
+      transform: translateY(-1px);
+      background: rgba(245,158,11,0.16);
+      border-color: var(--gold);
+    }
+
+    .trade-file-name {
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .check-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      color: var(--muted);
+      font-size: 12px;
+      user-select: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .check-label input {
+      accent-color: var(--gold);
+    }
+
     @media (max-width: 980px) {
       body { overflow: auto; }
 
@@ -295,7 +351,8 @@
       </select>
 
       <select id="yearSelect" title="Year">
-        <option value="2025" selected>2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2025">2025</option>
         <option value="2024">2024</option>
       </select>
 
@@ -325,6 +382,15 @@
 
       <input id="jumpInput" type="datetime-local" title="Jump to JST time" />
       <button class="btn-ghost" id="jumpBtn">Jump</button>
+
+      <input id="tradeFileInput" class="file-input" type="file" accept=".xlsx,.xls" />
+      <label class="file-button" for="tradeFileInput">Trades XLSX</label>
+      <span class="trade-file-name" id="tradeFileName">No trades</span>
+      <label class="check-label" title="Show or hide trade markers">
+        <input id="showTradesCB" type="checkbox" checked />
+        Show
+      </label>
+      <button class="btn-ghost" id="clearTradesBtn">Clear Trades</button>
 
       <button class="btn-primary" id="loadBtn">Load</button>
       <button class="btn-ghost" id="latestBtn">Latest</button>
@@ -383,7 +449,7 @@
 
   <footer class="footer">
     <div>Data path: <b>data/usdjpy/USDJPY_1 Min_[Bid/Ask]_YYYY.01.01_YYYY.12.31.csv</b></div>
-    <div>Mouse wheel zoom · Drag to pan · Jump input uses JST · Hotkeys: L load / J jump / F fit</div>
+    <div>Mouse wheel zoom · Drag to pan · Trade Excel stays local · Hotkeys: L load / J jump / F fit</div>
   </footer>
 </div>
 
@@ -398,6 +464,10 @@
     tf: document.getElementById("tfSelect"),
     jumpInput: document.getElementById("jumpInput"),
     jumpBtn: document.getElementById("jumpBtn"),
+    tradeFileInput: document.getElementById("tradeFileInput"),
+    tradeFileName: document.getElementById("tradeFileName"),
+    showTradesCB: document.getElementById("showTradesCB"),
+    clearTradesBtn: document.getElementById("clearTradesBtn"),
     loadBtn: document.getElementById("loadBtn"),
     latestBtn: document.getElementById("latestBtn"),
     fitBtn: document.getElementById("fitBtn"),
@@ -420,6 +490,8 @@
   let chart;
   let candleSeries;
   let currentData = [];
+  let tradeExecutions = [];
+  let tradePairs = [];
   let resizeObserver;
 
   function setStatus(text, type = "") {
@@ -571,6 +643,223 @@
     return Array.from(buckets.values()).sort((a, b) => a.time - b.time);
   }
 
+
+  function toNumber(value) {
+    if (value === null || value === undefined || value === "") return NaN;
+    return Number(String(value).replace(/,/g, "").replace(/¥/g, "").replace(/\\/g, "").trim());
+  }
+
+  function normalizeRowKeys(row) {
+    const out = {};
+    for (const [key, value] of Object.entries(row)) {
+      out[String(key).trim()] = value;
+    }
+    return out;
+  }
+
+  function parseTradeDateToUtcSeconds(value) {
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      // Treat Date components as JST wall time and convert to UTC seconds.
+      return Math.floor(Date.UTC(
+        value.getFullYear(),
+        value.getMonth(),
+        value.getDate(),
+        value.getHours() - 9,
+        value.getMinutes(),
+        value.getSeconds()
+      ) / 1000);
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      // Excel serial date. It represents local/JST wall time in your export.
+      const date = new Date(Date.UTC(1899, 11, 30) + value * 86400000);
+      return Math.floor(Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        date.getUTCHours() - 9,
+        date.getUTCMinutes(),
+        date.getUTCSeconds()
+      ) / 1000);
+    }
+
+    const s = String(value || "").trim();
+    if (!s) return null;
+
+    // Supports YYYY.MM.DD HH:mm:ss, YYYY-MM-DD HH:mm:ss, YYYY/MM/DD HH:mm:ss.
+    const direct = parseTokyoTimeToUtcSeconds(s);
+    if (direct) return direct;
+
+    // Supports MM/DD/YYYY HH:mm:ss.
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) {
+      const mo = Number(m[1]);
+      const d = Number(m[2]);
+      const y = Number(m[3]);
+      const h = Number(m[4] || 0);
+      const mi = Number(m[5] || 0);
+      const sec = Number(m[6] || 0);
+      return Math.floor(Date.UTC(y, mo - 1, d, h - 9, mi, sec) / 1000);
+    }
+
+    return null;
+  }
+
+  function parseTradeWorkbookRows(rows) {
+    const normalized = rows.map(normalizeRowKeys);
+
+    if (!normalized.length) {
+      throw new Error("Trade Excel is empty.");
+    }
+
+    const required = ["約定日時", "約定レート", "売買", "区分", "決済損益（円）"];
+    const missing = required.filter(key => !Object.prototype.hasOwnProperty.call(normalized[0], key));
+
+    if (missing.length) {
+      throw new Error("Trade Excel column mismatch. Required: 約定日時, 約定レート, 売買, 区分, 決済損益（円）");
+    }
+
+    return normalized
+      .map(row => ({
+        time: parseTradeDateToUtcSeconds(row["約定日時"]),
+        price: toNumber(row["約定レート"]),
+        side: String(row["売買"] || "").trim(),
+        kind: String(row["区分"] || "").trim(),
+        pnl: toNumber(row["決済損益（円）"])
+      }))
+      .filter(row => row.time && Number.isFinite(row.price))
+      .sort((a, b) => a.time - b.time);
+  }
+
+  function buildTradePairs(executions) {
+    const queue = [];
+    const pairs = [];
+
+    for (const row of executions) {
+      if (row.kind === "新規") {
+        queue.push(row);
+      } else if (row.kind === "決済" && queue.length) {
+        const entry = queue.shift();
+        const exit = row;
+        const pnl = Number.isFinite(exit.pnl) ? exit.pnl : 0;
+        pairs.push({ entry, exit, pnl });
+      }
+    }
+
+    return pairs;
+  }
+
+  function tradePnlText(pnl) {
+    if (!Number.isFinite(pnl)) return "0";
+    return `${pnl >= 0 ? "+" : ""}${pnl}`;
+  }
+
+  function tradeTimeToNearestVisibleTime(tradeTime) {
+    if (!currentData.length) return null;
+
+    const first = currentData[0].time;
+    const last = currentData[currentData.length - 1].time;
+    const maxGap = Number(els.tf.value) * 60 * 3;
+
+    if (tradeTime < first - maxGap || tradeTime > last + maxGap) {
+      return null;
+    }
+
+    const idx = findNearestIndexByTime(currentData, tradeTime);
+    if (idx < 0) return null;
+
+    return currentData[idx].time;
+  }
+
+  function applyTradeMarkers() {
+    if (!candleSeries) return;
+
+    if (!els.showTradesCB.checked || !currentData.length || !tradePairs.length) {
+      candleSeries.setMarkers([]);
+      return;
+    }
+
+    const markers = [];
+
+    for (const pair of tradePairs) {
+      const entryTime = tradeTimeToNearestVisibleTime(pair.entry.time);
+      const exitTime = tradeTimeToNearestVisibleTime(pair.exit.time);
+
+      const isBuyEntry = pair.entry.side === "買";
+      const entryColor = isBuyEntry ? "#f59e0b" : "#3b82f6";
+      const exitColor = pair.pnl >= 0 ? "#00e5a0" : "#f43f5e";
+
+      if (entryTime !== null) {
+        markers.push({
+          time: entryTime,
+          position: isBuyEntry ? "belowBar" : "aboveBar",
+          color: entryColor,
+          shape: isBuyEntry ? "arrowUp" : "arrowDown",
+          text: isBuyEntry ? "BUY" : "SELL"
+        });
+      }
+
+      if (exitTime !== null) {
+        markers.push({
+          time: exitTime,
+          position: isBuyEntry ? "aboveBar" : "belowBar",
+          color: exitColor,
+          shape: pair.pnl >= 0 ? "circle" : "square",
+          text: tradePnlText(pair.pnl)
+        });
+      }
+    }
+
+    markers.sort((a, b) => {
+      if (a.time !== b.time) return a.time - b.time;
+      return String(a.text).localeCompare(String(b.text));
+    });
+
+    candleSeries.setMarkers(markers);
+  }
+
+  async function loadTradeExcel(file) {
+    if (!file) return;
+
+    try {
+      setLoading(true, "Reading trade Excel...");
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: true });
+
+      tradeExecutions = parseTradeWorkbookRows(rows);
+      tradePairs = buildTradePairs(tradeExecutions);
+
+      els.tradeFileName.textContent = file.name;
+      applyTradeMarkers();
+
+      setStatus(`Loaded ${tradePairs.length} trade pairs from ${file.name}`, "ok");
+    } catch (error) {
+      console.error(error);
+      tradeExecutions = [];
+      tradePairs = [];
+      els.tradeFileName.textContent = "No trades";
+      applyTradeMarkers();
+      alert(error.message);
+      setStatus(error.message, "err");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function clearTrades() {
+    tradeExecutions = [];
+    tradePairs = [];
+    els.tradeFileInput.value = "";
+    els.tradeFileName.textContent = "No trades";
+    applyTradeMarkers();
+    setStatus("Trade markers cleared", "ok");
+  }
+
+
   function formatPrice(value) {
     if (!Number.isFinite(value)) return "-";
     return value.toFixed(3);
@@ -703,6 +992,7 @@
 
       currentData = data;
       candleSeries.setData(data);
+      applyTradeMarkers();
 
       if (options.fit !== false) {
         chart.timeScale().fitContent();
@@ -828,6 +1118,12 @@
   els.jumpBtn.addEventListener("click", jumpToSelectedTime);
   els.latestBtn.addEventListener("click", goLatest);
   els.fitBtn.addEventListener("click", fitContent);
+  els.tradeFileInput.addEventListener("change", event => {
+    const file = event.target.files && event.target.files[0];
+    loadTradeExcel(file);
+  });
+  els.showTradesCB.addEventListener("change", applyTradeMarkers);
+  els.clearTradesBtn.addEventListener("click", clearTrades);
 
   document.addEventListener("keydown", event => {
     const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
