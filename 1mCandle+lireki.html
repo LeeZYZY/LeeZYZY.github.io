@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>USDJPY Candles + Trades (Upload)</title>
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <!-- CSV/TSV parser -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- Excel parser (SheetJS) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    html, body { height: 100%; margin: 0; background: #000; }
+    #app { height: 100%; position: relative; }
+    #plot { height: 100%; }
+
+    .panel {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      top: auto;
+      right: auto;
+      z-index: 2000;
+      background: rgba(0,0,0,0.65);
+      border: 1px solid #666;
+      padding: 10px 10px 8px;
+      border-radius: 8px;
+      color: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-size: 12px;
+      width: 380px;
+    }
+    .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .row label { width: 96px; color: #ddd; }
+    .row input[type="file"] { width: 100%; color: #ddd; }
+    .row button {
+      padding: 6px 10px; border-radius: 6px;
+      border: 1px solid #666; background: #111; color: #fff;
+      cursor: pointer;
+    }
+    .row button:hover { background: #1a1a1a; }
+    .meta { color: #bbb; line-height: 1.35; }
+    .warn { color: #ffb; }
+
+    /* Crosshair toggle UI */
+    .crosshair-ui {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 1500;
+      background: rgba(0,0,0,0.6);
+      border: 1px solid #666;
+      padding: 4px 6px;
+      border-radius: 6px;
+      color: #fff;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-size: 12px;
+      user-select: none;
+    }
+
+    /* Crosshair overlay layer (on top of plotly) */
+    .ch-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1400;
+      pointer-events: none;
+      display: none; /* controlled by checkbox */
+    }
+    .ch-vline, .ch-hline {
+      position: absolute;
+      background: rgba(255,255,255,0.75);
+    }
+    .ch-vline { width: 1px; }
+    .ch-hline { height: 1px; background: rgba(255,255,255,0.55); }
+
+    .ch-label {
+      position: absolute;
+      background: #000;
+      border: 1px solid #fff;
+      color: #fff;
+      font: 12px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+  <div id="plot"></div>
+
+  <div class="panel">
+    <div class="row">
+      <label>1分足 CSV/TSV</label>
+      <input id="csvFile" type="file" accept=".csv,.tsv,.txt" />
+    </div>
+    <div class="row">
+      <label>取引履歴 Excel</label>
+      <input id="xlsxFile" type="file" accept=".xlsx,.xls" />
+    </div>
+    <div class="row">
+      <button id="renderBtn">Render</button>
+      <button id="clearBtn">Clear</button>
+      <div class="meta" id="status" style="margin-left:auto;text-align:right;"></div>
+    </div>
+    <div class="meta">
+      Crosshair：左上角开关（快捷键 <b>C</b> 切换 / <b>Esc</b> 关闭）<br/>
+      <span class="warn">注意：需要联网加载 Plotly / xlsx / papaparse CDN。</span>
+    </div>
+  </div>
+
+  <div class="crosshair-ui" id="crosshairUI">
+    <input id="crosshairCB" type="checkbox" style="margin-right:6px" />
+    <span>Crosshair (C)</span>
+  </div>
+</div>
+
+<script>
+  // ----------------------------
+  // State
+  // ----------------------------
+  let candleRows = null;  // array of objects
+  let tradeRows  = null;  // array of objects
+
+  const statusEl = document.getElementById('status');
+  const csvInput = document.getElementById('csvFile');
+  const xlsInput = document.getElementById('xlsxFile');
+  const renderBtn = document.getElementById('renderBtn');
+  const clearBtn  = document.getElementById('clearBtn');
+  const crosshairCB = document.getElementById('crosshairCB');
+
+  // ----------------------------
+  // Helpers
+  // ----------------------------
+  function setStatus() {
+    const c = candleRows ? `CSV ✓ (${candleRows.length})` : 'CSV -';
+    const x = tradeRows  ? `XLSX ✓ (${tradeRows.length})` : 'XLSX -';
+    statusEl.textContent = `${c}\n${x}`;
+    statusEl.style.whiteSpace = 'pre';
+  }
+
+  function floorToMinute(d) {
+    return new Date(Math.floor(d.getTime() / 60000) * 60000);
+  }
+
+  // 强健日期解析：支持 YYYY.MM.DD HH:mm:ss / 12/24/2025 11:43 等
+  function parseAnyDate(v) {
+    if (v instanceof Date) return v;
+
+    // Excel serial date
+    if (typeof v === 'number' && isFinite(v)) {
+      const epoch = new Date(1899, 11, 30).getTime(); // 本地时间基准
+      return new Date(epoch + v * 86400000);
+    }
+
+    const s0 = String(v ?? '').trim();
+    if (!s0) return new Date(NaN);
+
+    // 1) YYYY.MM.DD HH:mm(:ss) / YYYY-MM-DD / YYYY/MM/DD
+    let m = s0.match(/^(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (m) {
+      const y = +m[1], mo = +m[2] - 1, d = +m[3];
+      const hh = +(m[4] || 0), mm = +(m[5] || 0), ss = +(m[6] || 0);
+      return new Date(y, mo, d, hh, mm, ss);
+    }
+
+    // 2) MM/DD/YYYY HH:mm(:ss)
+    m = s0.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (m) {
+      const mo = +m[1] - 1, d = +m[2], y = +m[3];
+      const hh = +(m[4] || 0), mm = +(m[5] || 0), ss = +(m[6] || 0);
+      return new Date(y, mo, d, hh, mm, ss);
+    }
+
+    // 3) fallback: ISO-ish
+    const isoLike = s0.includes(' ') && !s0.includes('T') ? s0.replace(' ', 'T') : s0;
+    return new Date(isoLike);
+  }
+
+  function toNumber(v) {
+    if (v === null || v === undefined || v === '') return NaN;
+    return Number(String(v).replace(/,/g, '').replace(/¥/g, '').replace(/\\/g,''));
+  }
+
+  function requireColumns(obj, cols) {
+    return cols.every(k => Object.prototype.hasOwnProperty.call(obj, k));
+  }
+
+  // ----------------------------
+  // Read CSV/TSV (candles)
+  // ----------------------------
+  csvInput.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+
+    const text = await f.text();
+
+    // 自动猜分隔符（优先 tab）
+    const firstLine = text.split(/\r?\n/)[0] || '';
+    let delim = "\t";
+    if (firstLine.includes("\t")) delim = "\t";
+    else if (firstLine.includes(",")) delim = ",";
+    else if (firstLine.includes(";")) delim = ";";
+    else if (firstLine.includes("|")) delim = "|";
+    else delim = "";
+
+    const parsed = Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      delimiter: delim,
+      delimitersToGuess: ["\t", ",", ";", "|", " "],
+      transformHeader: (h) => String(h)
+        .replace(/^\uFEFF/, "")
+        .replace(/\r/g, "")
+        .trim(),
+    });
+
+    const fields = parsed.meta && parsed.meta.fields ? parsed.meta.fields : [];
+
+    if (parsed.errors && parsed.errors.length) {
+      alert('CSV/TSV 解析失败：' + parsed.errors[0].message);
+      return;
+    }
+
+    const rows = parsed.data;
+
+    if (!rows.length || !requireColumns(rows[0], ['Time (Asia/Tokyo)','Open','High','Low','Close'])) {
+      alert(
+        '列不匹配：需要 Time (Asia/Tokyo), Open, High, Low, Close\n' +
+        '实际读到的列名是：\n' + fields.join(' | ')
+      );
+      return;
+    }
+
+    candleRows = rows;
+    setStatus();
+  });
+
+  // ----------------------------
+  // Read XLSX (trades)
+  // ----------------------------
+  xlsInput.addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+
+    const buf = await f.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+
+    const sheetName = wb.SheetNames[0];
+    const ws = wb.Sheets[sheetName];
+
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: true });
+
+    if (!rows.length) {
+      alert('Excel 为空或无法读取。');
+      return;
+    }
+
+    const needed = ['約定日時','約定レート','売買','区分','決済損益（円）'];
+    const ok = needed.every(k => Object.prototype.hasOwnProperty.call(rows[0], k));
+    if (!ok) {
+      alert('Excel 列不匹配：需要 約定日時, 約定レート, 売買, 区分, 決済損益（円）');
+      return;
+    }
+
+    tradeRows = rows;
+    setStatus();
+  });
+
+  // ----------------------------
+  // Build plot
+  // ----------------------------
+  function buildFigure(candleRows, tradeRows) {
+    const t = [];
+    const open = [], high = [], low = [], close = [];
+
+    for (const r of candleRows) {
+      const dt = parseAnyDate(r['Time (Asia/Tokyo)']);
+      const o = toNumber(r['Open']);
+      const h = toNumber(r['High']);
+      const l = toNumber(r['Low']);
+      const c = toNumber(r['Close']);
+      if (isNaN(dt.getTime()) || !isFinite(o) || !isFinite(h) || !isFinite(l) || !isFinite(c)) continue;
+      t.push(dt);
+      open.push(o); high.push(h); low.push(l); close.push(c);
+    }
+
+    if (t.length === 0) {
+      alert("没有解析出任何K线：请确认文件分隔符与表头，并且时间格式如 2025.12.22 07:00:00");
+      return { data: [], layout: {} };
+    }
+
+    const idx = t.map((_, i) => i).sort((a,b) => t[a] - t[b]);
+    const T = idx.map(i => t[i]);
+    const O = idx.map(i => open[i]);
+    const H = idx.map(i => high[i]);
+    const L = idx.map(i => low[i]);
+    const C = idx.map(i => close[i]);
+
+    const candles = {
+      type: 'candlestick',
+      x: T, open: O, high: H, low: L, close: C,
+      name: '1-min candles',
+      increasing: { line: { color: 'white', width: 1 }, fillcolor: 'white' },
+      decreasing: { line: { color: 'white', width: 1 }, fillcolor: 'black' }
+    };
+
+    const trades = tradeRows
+      .map(r => ({
+        dt: parseAnyDate(r['約定日時']),
+        price: toNumber(r['約定レート']),
+        side: String(r['売買']).trim(),   // 買 / 売
+        kind: String(r['区分']).trim(),   // 新規 / 決済
+        pnl:  toNumber(r['決済損益（円）'])
+      }))
+      .filter(r => !isNaN(r.dt.getTime()) && isFinite(r.price))
+      .sort((a,b) => a.dt - b.dt);
+
+    const data = [candles];
+    const annotations = [];
+
+    const q = [];
+    for (const r of trades) {
+      if (r.kind === '新規') {
+        q.push(r);
+      } else if (r.kind === '決済' && q.length) {
+        const entry = q.shift();
+        const exit_ = r;
+
+        const pnl_value = isFinite(exit_.pnl) ? exit_.pnl : 0;
+        const hover_msg = `<span style='color:white'>損益: ${pnl_value} 円</span>`;
+
+        const entry_symbol = (entry.side === '買') ? 'arrow-up' : 'arrow-down';
+        const entry_color  = (entry.side === '買') ? 'orange' : 'royalblue';
+
+        const exit_symbol  = (pnl_value > 0) ? 'star' : 'x';
+        const exit_color   = (pnl_value > 0) ? 'seagreen' : 'crimson';
+
+        const entry_time = floorToMinute(entry.dt);
+        const exit_time  = floorToMinute(exit_.dt);
+
+        data.push({
+          type: 'scatter',
+          mode: 'markers',
+          x: [entry_time],
+          y: [entry.price],
+          marker: { symbol: entry_symbol, size: 12, color: entry_color },
+          name: 'Entry',
+          hovertext: [hover_msg],
+          hoverinfo: 'x+y+text',
+          showlegend: false
+        });
+
+        data.push({
+          type: 'scatter',
+          mode: 'markers',
+          x: [exit_time],
+          y: [exit_.price],
+          marker: { symbol: exit_symbol, size: 12, color: exit_color },
+          name: 'Exit',
+          hovertext: [hover_msg],
+          hoverinfo: 'x+y+text',
+          showlegend: false
+        });
+
+        annotations.push({
+          x: exit_time, y: exit_.price,
+          ax: entry_time, ay: entry.price,
+          xref: 'x', yref: 'y', axref: 'x', ayref: 'y',
+          showarrow: true,
+          arrowhead: 2,
+          arrowsize: 1.5,
+          arrowwidth: 1,
+          arrowcolor: 'gray',
+          text: ''
+        });
+      }
+    }
+
+    const layout = {
+      title: "USDJPY 1-min Candles with Trades & PnL",
+      xaxis: {
+        type: 'date',
+        rangeslider: { visible: false },
+        tickfont: { color: 'white' },
+        title: { font: { color: 'white' } },
+        gridcolor: 'gray'
+      },
+      yaxis: {
+        side: 'right',
+        tickfont: { color: 'white' },
+        title: { font: { color: 'white' } },
+        gridcolor: 'gray'
+      },
+      hovermode: 'closest',
+      dragmode: 'pan',
+      plot_bgcolor: 'black',
+      paper_bgcolor: 'black',
+      autosize: true,
+      height: null,
+      annotations: annotations,
+      margin: { l: 40, r: 60, t: 50, b: 35 }
+    };
+
+    return { data, layout };
+  }
+
+  // ----------------------------
+  // Keyboard (C / ESC)  ✅不被 file input 吃掉
+  // ----------------------------
+  function isTypingTarget(el){
+    if(!el) return false;
+    const tag = (el.tagName || '').toLowerCase();
+    if (tag === 'textarea' || el.isContentEditable) return true;
+    if (tag === 'input') {
+      const t = (el.type || '').toLowerCase();
+      return ['text','search','email','number','password','tel','url'].includes(t);
+    }
+    return false;
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (isTypingTarget(document.activeElement)) return;
+
+    if (e.key === 'c' || e.key === 'C') {
+      crosshairCB.checked = !crosshairCB.checked;
+      crosshairCB.dispatchEvent(new Event('change'));
+    }
+    if (e.key === 'Escape') {
+      if (crosshairCB.checked) {
+        crosshairCB.checked = false;
+        crosshairCB.dispatchEvent(new Event('change'));
+      }
+    }
+  });
+
+  // ----------------------------
+  // Crosshair overlay (HTML) ✅稳定显示十字线 + x/y 值
+  // ----------------------------
+  function installCrosshairOverlay(gd) {
+    // Plotly.newPlot 会清空 div 内容，所以每次 render 后都重装 overlay
+    gd.style.position = gd.style.position || 'relative';
+
+    const old = gd.querySelector('.ch-overlay');
+    if (old) old.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ch-overlay';
+
+    const vline = document.createElement('div');
+    vline.className = 'ch-vline';
+
+    const hline = document.createElement('div');
+    hline.className = 'ch-hline';
+
+    const xLabel = document.createElement('div');
+    xLabel.className = 'ch-label';
+
+    const yLabel = document.createElement('div');
+    yLabel.className = 'ch-label';
+
+    overlay.appendChild(vline);
+    overlay.appendChild(hline);
+    overlay.appendChild(xLabel);
+    overlay.appendChild(yLabel);
+    gd.appendChild(overlay);
+
+    // 防重复：移除旧监听
+    if (gd.__ch_move) gd.removeEventListener('mousemove', gd.__ch_move, true);
+    if (gd.__ch_leave) gd.removeEventListener('mouseleave', gd.__ch_leave, true);
+    if (gd.__ch_change) crosshairCB.removeEventListener('change', gd.__ch_change);
+
+    function hide() {
+      vline.style.display = 'none';
+      hline.style.display = 'none';
+      xLabel.style.display = 'none';
+      yLabel.style.display = 'none';
+    }
+
+    function fmtX(xVal) {
+      try {
+        const d = (xVal instanceof Date) ? xVal : new Date(xVal);
+        if (!isNaN(d.getTime())) return d.toLocaleString('ja-JP');
+      } catch(e) {}
+      return String(xVal);
+    }
+
+    function updateFromEvent(e) {
+      if (!crosshairCB.checked) return;
+
+      const full = gd._fullLayout;
+      if (!full || !full._size || !full.xaxis || !full.yaxis) return;
+
+      const rect = gd.getBoundingClientRect();
+      const xPx = e.clientX - rect.left;
+      const yPx = e.clientY - rect.top;
+
+      const size = full._size;
+
+      // clamp 到绘图区（即使在边距/轴上也显示）
+      let xPlot = xPx - size.l;
+      let yPlot = yPx - size.t;
+      xPlot = Math.max(0, Math.min(size.w, xPlot));
+      yPlot = Math.max(0, Math.min(size.h, yPlot));
+
+      const xa = full.xaxis;
+      const ya = full.yaxis;
+
+      const xVal = xa.p2d(xPlot);
+      const yVal = ya.p2d(yPlot);
+
+      const left = size.l + xPlot;
+      const top  = size.t + yPlot;
+
+      // lines
+      vline.style.display = 'block';
+      vline.style.left = `${left}px`;
+      vline.style.top  = `${size.t}px`;
+      vline.style.height = `${size.h}px`;
+
+      hline.style.display = 'block';
+      hline.style.left = `${size.l}px`;
+      hline.style.top  = `${top}px`;
+      hline.style.width = `${size.w}px`;
+
+      // labels
+      const yText = (typeof yVal === 'number' && isFinite(yVal)) ? yVal.toFixed(3) : String(yVal);
+      const xText = fmtX(xVal);
+
+      yLabel.style.display = 'block';
+      yLabel.textContent = yText;
+      yLabel.style.left = `${size.l + size.w + 8}px`;  // right margin
+      yLabel.style.top  = `${top}px`;
+      yLabel.style.transform = 'translateY(-50%)';
+
+      xLabel.style.display = 'block';
+      xLabel.textContent = xText;
+      xLabel.style.left = `${left}px`;
+      xLabel.style.top  = `${size.t + size.h + 8}px`;  // bottom margin
+      xLabel.style.transform = 'translateX(-50%)';
+    }
+
+    function onMove(e) {
+      if (!crosshairCB.checked) return;
+      overlay.style.display = 'block';
+      updateFromEvent(e);
+    }
+
+    function onLeave() {
+      if (!crosshairCB.checked) return;
+      hide();
+    }
+
+    function onToggle() {
+      const on = crosshairCB.checked;
+      gd.style.cursor = on ? 'crosshair' : 'default';
+      overlay.style.display = on ? 'block' : 'none';
+
+      // 开启时关闭 Plotly tooltip，关闭时恢复
+      Plotly.relayout(gd, { hovermode: on ? false : 'closest' });
+
+      if (!on) hide();
+    }
+
+    gd.addEventListener('mousemove', onMove, true);
+    gd.addEventListener('mouseleave', onLeave, true);
+    crosshairCB.addEventListener('change', onToggle);
+
+    gd.__ch_move = onMove;
+    gd.__ch_leave = onLeave;
+    gd.__ch_change = onToggle;
+
+    // 初始状态同步
+    onToggle();
+  }
+
+  // ----------------------------
+  // Render / Clear
+  // ----------------------------
+  renderBtn.addEventListener('click', async () => {
+    if (!candleRows) { alert('请先上传 1分足 CSV/TSV'); return; }
+    if (!tradeRows)  { alert('请先上传 取引履歴 Excel'); return; }
+
+    const fig = buildFigure(candleRows, tradeRows);
+
+    const config = {
+      scrollZoom: true,
+      displaylogo: false,
+      responsive: true
+    };
+
+    await Plotly.newPlot('plot', fig.data, fig.layout, config);
+    const gd = document.getElementById('plot');
+
+    // ✅每次 newPlot 后都要重装（newPlot 会清空 div）
+    installCrosshairOverlay(gd);
+
+    setStatus();
+  });
+
+  clearBtn.addEventListener('click', async () => {
+    candleRows = null;
+    tradeRows = null;
+    csvInput.value = '';
+    xlsInput.value = '';
+    setStatus();
+    await Plotly.purge('plot');
+  });
+
+  // init empty
+  setStatus();
+  Plotly.newPlot('plot', [], {
+    paper_bgcolor: 'black',
+    plot_bgcolor: 'black',
+    xaxis: { gridcolor: 'gray', tickfont: {color:'white'}, rangeslider: {visible:false} },
+    yaxis: { gridcolor: 'gray', tickfont: {color:'white'}, side:'right' },
+    dragmode: 'pan',
+    hovermode: 'closest'
+  }, { scrollZoom:true, displaylogo:false, responsive:true })
+  .then(() => {
+    const gd = document.getElementById('plot');
+    installCrosshairOverlay(gd);
+  });
+</script>
+</body>
+</html>
