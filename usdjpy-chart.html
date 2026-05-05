@@ -96,6 +96,7 @@
     }
 
     select,
+    input[type="datetime-local"],
     button {
       height: 32px;
       border-radius: 8px;
@@ -322,6 +323,9 @@
         <option value="1440">1d</option>
       </select>
 
+      <input id="jumpInput" type="datetime-local" title="Jump to JST time" />
+      <button class="btn-ghost" id="jumpBtn">Jump</button>
+
       <button class="btn-primary" id="loadBtn">Load</button>
       <button class="btn-ghost" id="latestBtn">Latest</button>
       <button class="btn-ghost" id="fitBtn">Fit</button>
@@ -379,7 +383,7 @@
 
   <footer class="footer">
     <div>Data path: <b>data/usdjpy/USDJPY_1 Min_[Bid/Ask]_YYYY.01.01_YYYY.12.31.csv</b></div>
-    <div>Mouse wheel zoom · Drag to pan · Time is displayed as JST</div>
+    <div>Mouse wheel zoom · Drag to pan · Jump input uses JST · Hotkeys: L load / J jump / F fit</div>
   </footer>
 </div>
 
@@ -392,6 +396,8 @@
     year: document.getElementById("yearSelect"),
     month: document.getElementById("monthSelect"),
     tf: document.getElementById("tfSelect"),
+    jumpInput: document.getElementById("jumpInput"),
+    jumpBtn: document.getElementById("jumpBtn"),
     loadBtn: document.getElementById("loadBtn"),
     latestBtn: document.getElementById("latestBtn"),
     fitBtn: document.getElementById("fitBtn"),
@@ -676,7 +682,7 @@
     resizeObserver.observe(els.chartWrap);
   }
 
-  async function loadSelected() {
+  async function loadSelected(options = {}) {
     const side = els.side.value;
     const year = els.year.value;
     const month = els.month.value;
@@ -697,7 +703,10 @@
 
       currentData = data;
       candleSeries.setData(data);
-      chart.timeScale().fitContent();
+
+      if (options.fit !== false) {
+        chart.timeScale().fitContent();
+      }
 
       const sideText = side.toUpperCase();
       const monthText = month === "all" ? "Full Year" : `${year}-${month}`;
@@ -705,12 +714,101 @@
       els.infoSymbol.textContent = `USDJPY ${sideText} ${tfText}`;
       updateInfo(data[data.length - 1], data.length);
       setStatus(`${sideText} ${monthText} ${tfText} · ${data.length} candles`, "ok");
+      return true;
     } catch (error) {
       console.error(error);
       setStatus(error.message, "err");
       alert(error.message);
+      return false;
     } finally {
       setLoading(false);
+    }
+  }
+
+
+  function parseDatetimeLocalAsJstSeconds(value) {
+    // Input from <input type="datetime-local">: YYYY-MM-DDTHH:mm or YYYY-MM-DDTHH:mm:ss
+    const m = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!m) return null;
+
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const h = Number(m[4]);
+    const mi = Number(m[5]);
+    const s = Number(m[6] || 0);
+
+    return Math.floor(Date.UTC(y, mo - 1, d, h - 9, mi, s) / 1000);
+  }
+
+  function findNearestIndexByTime(data, targetTime) {
+    if (!data.length) return -1;
+
+    let left = 0;
+    let right = data.length - 1;
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      if (data[mid].time === targetTime) return mid;
+      if (data[mid].time < targetTime) left = mid + 1;
+      else right = mid - 1;
+    }
+
+    if (left <= 0) return 0;
+    if (left >= data.length) return data.length - 1;
+
+    const before = data[left - 1];
+    const after = data[left];
+    return Math.abs(before.time - targetTime) <= Math.abs(after.time - targetTime) ? left - 1 : left;
+  }
+
+  function jumpToTime(targetTime) {
+    if (!currentData.length) return false;
+
+    const index = findNearestIndexByTime(currentData, targetTime);
+    if (index < 0) return false;
+
+    const leftPadding = 80;
+    const rightPadding = 140;
+    const from = Math.max(0, index - leftPadding);
+    const to = Math.min(currentData.length + 10, index + rightPadding);
+
+    chart.timeScale().setVisibleLogicalRange({ from, to });
+    updateInfo(currentData[index], currentData.length);
+
+    const nearest = currentData[index];
+    setStatus(`Jumped to ${formatJstTime(nearest.time)} · nearest candle`, "ok");
+    return true;
+  }
+
+  async function jumpToSelectedTime() {
+    const target = parseDatetimeLocalAsJstSeconds(els.jumpInput.value);
+
+    if (!target) {
+      alert("Please choose a JST date and time first.");
+      return;
+    }
+
+    const d = new Date((target + 9 * 3600) * 1000);
+    const year = String(d.getUTCFullYear());
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+
+    const yearOption = Array.from(els.year.options).some(option => option.value === year);
+    if (!yearOption) {
+      alert(`No data year is available for ${year}. Please add the CSV file first.`);
+      return;
+    }
+
+    // Load the target month first. This keeps jumps fast even with year-sized CSV files.
+    els.year.value = year;
+    els.month.value = month;
+
+    const ok = await loadSelected({ fit: false });
+    if (!ok) return;
+
+    const jumped = jumpToTime(target);
+    if (!jumped) {
+      alert("The selected time is outside the loaded data range.");
     }
   }
 
@@ -726,14 +824,22 @@
     chart.timeScale().fitContent();
   }
 
-  els.loadBtn.addEventListener("click", loadSelected);
+  els.loadBtn.addEventListener("click", () => loadSelected());
+  els.jumpBtn.addEventListener("click", jumpToSelectedTime);
   els.latestBtn.addEventListener("click", goLatest);
   els.fitBtn.addEventListener("click", fitContent);
 
   document.addEventListener("keydown", event => {
+    const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+    if (["input", "select", "textarea"].includes(tag)) return;
+
     if (event.key.toLowerCase() === "l") loadSelected();
+    if (event.key.toLowerCase() === "j") jumpToSelectedTime();
     if (event.key.toLowerCase() === "f") fitContent();
   });
+
+  // A convenient default jump target for testing.
+  els.jumpInput.value = "2025-12-01T09:00";
 
   makeChart();
 
