@@ -562,7 +562,7 @@
 
           <select id="monthSelect" class="w-month" title="Month">
             <option value="all">Full Year</option>
-            <option value="01" selected>Jan</option>
+            <option value="01">Jan</option>
             <option value="02">Feb</option>
             <option value="03">Mar</option>
             <option value="04">Apr</option>
@@ -573,7 +573,7 @@
             <option value="09">Sep</option>
             <option value="10">Oct</option>
             <option value="11">Nov</option>
-            <option value="12">Dec</option>
+            <option value="12" selected>Dec</option>
           </select>
 
           <select id="tfSelect" class="w-tf" title="Timeframe">
@@ -709,6 +709,9 @@
   let tradeExecutions = [];
   let tradePairs = [];
   let resizeObserver;
+  let tradeOverlayRaf = null;
+  let tradeOverlayLiveSyncRaf = null;
+  let chartPointerDown = false;
 
   function setStatus(text, type = "") {
     els.statusText.textContent = text;
@@ -1090,6 +1093,37 @@
     hideTradeTooltip();
   }
 
+  function requestTradeOverlayRender() {
+    if (tradeOverlayRaf !== null) return;
+
+    tradeOverlayRaf = window.requestAnimationFrame(() => {
+      tradeOverlayRaf = null;
+      renderTradeOverlays();
+    });
+  }
+
+  function startTradeOverlayLiveSync(durationMs = 650) {
+    const startedAt = performance.now();
+
+    if (tradeOverlayLiveSyncRaf !== null) {
+      window.cancelAnimationFrame(tradeOverlayLiveSyncRaf);
+      tradeOverlayLiveSyncRaf = null;
+    }
+
+    const loop = () => {
+      renderTradeOverlays();
+
+      if (performance.now() - startedAt < durationMs) {
+        tradeOverlayLiveSyncRaf = window.requestAnimationFrame(loop);
+      } else {
+        tradeOverlayLiveSyncRaf = null;
+        renderTradeOverlays();
+      }
+    };
+
+    tradeOverlayLiveSyncRaf = window.requestAnimationFrame(loop);
+  }
+
   function renderTradeOverlays() {
     if (!els.tradeOverlay || !chart || !candleSeries) return;
 
@@ -1304,16 +1338,55 @@
     });
 
     chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
-      renderTradeOverlays();
+      requestTradeOverlayRender();
     });
+
+    if (typeof chart.timeScale().subscribeVisibleTimeRangeChange === "function") {
+      chart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        requestTradeOverlayRender();
+      });
+    }
 
     resizeObserver = new ResizeObserver(entries => {
       const rect = entries[0].contentRect;
       chart.applyOptions({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
-      renderTradeOverlays();
+      requestTradeOverlayRender();
     });
 
     resizeObserver.observe(els.chartWrap);
+
+    els.chartWrap.addEventListener("pointerdown", () => {
+      chartPointerDown = true;
+      startTradeOverlayLiveSync(1200);
+    }, true);
+
+    window.addEventListener("pointermove", () => {
+      if (chartPointerDown) {
+        requestTradeOverlayRender();
+      }
+    }, true);
+
+    window.addEventListener("pointerup", () => {
+      if (chartPointerDown) {
+        chartPointerDown = false;
+        startTradeOverlayLiveSync(500);
+      }
+    }, true);
+
+    window.addEventListener("pointercancel", () => {
+      if (chartPointerDown) {
+        chartPointerDown = false;
+        requestTradeOverlayRender();
+      }
+    }, true);
+
+    els.chartWrap.addEventListener("wheel", () => {
+      startTradeOverlayLiveSync(500);
+    }, { passive: true });
+
+    els.chartWrap.addEventListener("touchmove", () => {
+      requestTradeOverlayRender();
+    }, { passive: true });
   }
 
   async function loadSelected(options = {}) {
@@ -1409,7 +1482,7 @@
     const to = Math.min(currentData.length + 10, index + rightPadding);
 
     chart.timeScale().setVisibleLogicalRange({ from, to });
-    renderTradeOverlays();
+    startTradeOverlayLiveSync(500);
     updateInfo(currentData[index], currentData.length);
 
     const nearest = currentData[index];
@@ -1453,13 +1526,13 @@
     const length = currentData.length;
     const from = Math.max(0, length - 220);
     chart.timeScale().setVisibleLogicalRange({ from, to: length + 10 });
-    renderTradeOverlays();
+    startTradeOverlayLiveSync(500);
   }
 
   function fitContent() {
     if (!currentData.length) return;
     chart.timeScale().fitContent();
-    renderTradeOverlays();
+    startTradeOverlayLiveSync(500);
   }
 
   els.loadBtn.addEventListener("click", () => loadSelected());
