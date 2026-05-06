@@ -62,12 +62,19 @@
 
     .topbar {
       display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 14px;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 14px 14px;
       border-bottom: 1px solid var(--border);
       background: rgba(5,7,11,0.92);
       backdrop-filter: blur(10px);
+    }
+
+    .toolbar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
     }
 
     .brand {
@@ -90,12 +97,42 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
-    .controls {
+    .toolbar-groups {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1.15fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(11,17,24,0.72);
+      min-width: 0;
+    }
+
+    .group-label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .group-row {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
-      flex: 1;
+      min-width: 0;
+    }
+
+    .group-row > * {
+      flex: 0 0 auto;
     }
 
     select,
@@ -110,6 +147,12 @@
       font-size: 12px;
       outline: none;
     }
+
+    .w-side { min-width: 78px; }
+    .w-year { min-width: 92px; }
+    .w-month { min-width: 102px; }
+    .w-tf { min-width: 74px; }
+    .w-jump { min-width: 186px; }
 
     select:focus,
     button:focus { border-color: var(--accent); }
@@ -144,6 +187,7 @@
       font-size: 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       white-space: nowrap;
+      padding: 0 2px;
     }
 
     .dot {
@@ -309,6 +353,17 @@
       accent-color: var(--gold);
     }
 
+    @media (max-width: 1180px) {
+      .toolbar-groups {
+        grid-template-columns: 1fr;
+      }
+
+      .status {
+        min-width: 0;
+        justify-content: flex-start;
+      }
+    }
+
     @media (max-width: 980px) {
       body { overflow: auto; }
 
@@ -318,16 +373,27 @@
         grid-template-rows: auto auto 72vh auto;
       }
 
-      .topbar {
+      .toolbar-head {
         align-items: flex-start;
         flex-direction: column;
       }
 
       .brand { min-width: 0; }
 
-      .status {
-        min-width: 0;
-        justify-content: flex-start;
+      .group-row {
+        align-items: stretch;
+      }
+
+      .group-row > select,
+      .group-row > input[type="datetime-local"],
+      .group-row > button,
+      .group-row > .file-button {
+        width: 100%;
+      }
+
+      .trade-file-name {
+        max-width: none;
+        width: 100%;
       }
 
       .info-row { grid-template-columns: repeat(2, 1fr); }
@@ -338,90 +404,109 @@
 
 <body>
 <div id="app">
+  
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-title">USDJPY CHART</div>
-      <div class="brand-sub">Historical Viewer</div>
+    <div class="toolbar-head">
+      <div class="brand">
+        <div class="brand-title">USDJPY CHART</div>
+        <div class="brand-sub">Historical Viewer</div>
+      </div>
+
+      <div class="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">Ready</span>
+      </div>
     </div>
 
-    <div class="controls">
-      <select id="sideSelect" title="Bid / Ask">
-        <option value="Bid">Bid</option>
-        <option value="Ask">Ask</option>
-      </select>
+    <div class="toolbar-groups">
+      <div class="control-group">
+        <div class="group-label">Data</div>
+        <div class="group-row">
+          <select id="sideSelect" class="w-side" title="Bid / Ask">
+            <option value="Bid">Bid</option>
+            <option value="Ask">Ask</option>
+          </select>
 
-      <select id="yearSelect" title="Year">
-        <option value="2026" selected>2026</option>
-        <option value="2025">2025</option>
-        <option value="2024">2024</option>
-        <option value="2023">2023</option>
-        <option value="2022">2022</option>
-        <option value="2021">2021</option>
-        <option value="2020">2020</option>
-        <option value="2019">2019</option>
-        <option value="2018">2018</option>
-        <option value="2017">2017</option>
-        <option value="2016">2016</option>
-        <option value="2015">2015</option>
-        <option value="2014">2014</option>
-        <option value="2013">2013</option>
-        <option value="2012">2012</option>
-        <option value="2011">2011</option>
-        <option value="2010">2010</option>
-        <option value="2009">2009</option>
-        <option value="2008">2008</option>
-        <option value="2007">2007</option>
-        <option value="2006">2006</option>
-        <option value="2005">2005</option>
-        <option value="2004">2004</option>
-      </select>
+          <select id="yearSelect" class="w-year" title="Year">
+            <option value="2026" selected>2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+            <option value="2023">2023</option>
+            <option value="2022">2022</option>
+            <option value="2021">2021</option>
+            <option value="2020">2020</option>
+            <option value="2019">2019</option>
+            <option value="2018">2018</option>
+            <option value="2017">2017</option>
+            <option value="2016">2016</option>
+            <option value="2015">2015</option>
+            <option value="2014">2014</option>
+            <option value="2013">2013</option>
+            <option value="2012">2012</option>
+            <option value="2011">2011</option>
+            <option value="2010">2010</option>
+            <option value="2009">2009</option>
+            <option value="2008">2008</option>
+            <option value="2007">2007</option>
+            <option value="2006">2006</option>
+            <option value="2005">2005</option>
+            <option value="2004">2004</option>
+          </select>
 
-      <select id="monthSelect" title="Month">
-        <option value="all">Full Year</option>
-        <option value="01" selected>Jan</option>
-        <option value="02">Feb</option>
-        <option value="03">Mar</option>
-        <option value="04">Apr</option>
-        <option value="05">May</option>
-        <option value="06">Jun</option>
-        <option value="07">Jul</option>
-        <option value="08">Aug</option>
-        <option value="09">Sep</option>
-        <option value="10">Oct</option>
-        <option value="11">Nov</option>
-        <option value="12">Dec</option>
-      </select>
+          <select id="monthSelect" class="w-month" title="Month">
+            <option value="all">Full Year</option>
+            <option value="01" selected>Jan</option>
+            <option value="02">Feb</option>
+            <option value="03">Mar</option>
+            <option value="04">Apr</option>
+            <option value="05">May</option>
+            <option value="06">Jun</option>
+            <option value="07">Jul</option>
+            <option value="08">Aug</option>
+            <option value="09">Sep</option>
+            <option value="10">Oct</option>
+            <option value="11">Nov</option>
+            <option value="12">Dec</option>
+          </select>
 
-      <select id="tfSelect" title="Timeframe">
-        <option value="1">1m</option>
-        <option value="5" selected>5m</option>
-        <option value="15">15m</option>
-        <option value="60">1h</option>
-        <option value="1440">1d</option>
-      </select>
+          <select id="tfSelect" class="w-tf" title="Timeframe">
+            <option value="1">1m</option>
+            <option value="5" selected>5m</option>
+            <option value="15">15m</option>
+            <option value="60">1h</option>
+            <option value="1440">1d</option>
+          </select>
 
-      <input id="jumpInput" type="datetime-local" title="Jump to JST time" />
-      <button class="btn-ghost" id="jumpBtn">Jump</button>
+          <button class="btn-primary" id="loadBtn">Load</button>
+        </div>
+      </div>
 
-      <input id="tradeFileInput" class="file-input" type="file" accept=".xlsx,.xls" />
-      <label class="file-button" for="tradeFileInput">Trades XLSX</label>
-      <span class="trade-file-name" id="tradeFileName">No trades</span>
-      <label class="check-label" title="Show or hide trade markers">
-        <input id="showTradesCB" type="checkbox" checked />
-        Show
-      </label>
-      <button class="btn-ghost" id="clearTradesBtn">Clear Trades</button>
+      <div class="control-group">
+        <div class="group-label">Navigate</div>
+        <div class="group-row">
+          <input id="jumpInput" class="w-jump" type="datetime-local" title="Jump to JST time" />
+          <button class="btn-ghost" id="jumpBtn">Jump</button>
+          <button class="btn-ghost" id="latestBtn">Latest</button>
+          <button class="btn-ghost" id="fitBtn">Fit</button>
+        </div>
+      </div>
 
-      <button class="btn-primary" id="loadBtn">Load</button>
-      <button class="btn-ghost" id="latestBtn">Latest</button>
-      <button class="btn-ghost" id="fitBtn">Fit</button>
-    </div>
-
-    <div class="status">
-      <span class="dot" id="statusDot"></span>
-      <span id="statusText">Ready</span>
+      <div class="control-group">
+        <div class="group-label">Trades</div>
+        <div class="group-row">
+          <input id="tradeFileInput" class="file-input" type="file" accept=".xlsx,.xls" />
+          <label class="file-button" for="tradeFileInput">Trades XLSX</label>
+          <span class="trade-file-name" id="tradeFileName">No trades</span>
+          <label class="check-label" title="Show or hide trade markers">
+            <input id="showTradesCB" type="checkbox" checked />
+            Show
+          </label>
+          <button class="btn-ghost" id="clearTradesBtn">Clear</button>
+        </div>
+      </div>
     </div>
   </header>
+
 
   <section class="info-row">
     <div class="info-cell">
