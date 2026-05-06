@@ -353,6 +353,113 @@
       accent-color: var(--gold);
     }
 
+    .trade-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .trade-point {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      transform: translate(-50%, -50%);
+      display: grid;
+      place-items: center;
+      border: 2px solid #05070b;
+      border-radius: 5px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+      color: #05070b;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.22), 0 6px 18px rgba(0,0,0,0.45);
+      user-select: none;
+    }
+
+    .trade-point.entry.buy {
+      background: var(--gold);
+    }
+
+    .trade-point.entry.sell {
+      background: var(--accent2);
+      color: #fff;
+    }
+
+    .trade-point.exit.win {
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .trade-point.exit.loss {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .trade-point:hover {
+      z-index: 5;
+      transform: translate(-50%, -50%) scale(1.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 0 20px rgba(0,229,160,0.22), 0 10px 24px rgba(0,0,0,0.55);
+    }
+
+    .trade-tooltip {
+      position: absolute;
+      z-index: 6;
+      display: none;
+      min-width: 260px;
+      max-width: 340px;
+      pointer-events: none;
+      background: rgba(5,7,11,0.96);
+      border: 1px solid rgba(215,225,234,0.24);
+      border-radius: 12px;
+      padding: 12px 13px;
+      color: var(--text);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.58);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .trade-tooltip .tt-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      color: #fff;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .trade-tooltip .tt-grid {
+      display: grid;
+      grid-template-columns: 86px 1fr;
+      gap: 5px 10px;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .trade-tooltip .tt-label {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .trade-tooltip .tt-value {
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      word-break: break-word;
+    }
+
+    .trade-tooltip .tt-value.win {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .trade-tooltip .tt-value.loss {
+      color: var(--red);
+      font-weight: 800;
+    }
+
+
     @media (max-width: 1180px) {
       .toolbar-groups {
         grid-template-columns: 1fr;
@@ -545,6 +652,8 @@
 
   <main id="chartWrap">
     <div id="chart"></div>
+    <div id="tradeOverlay" class="trade-overlay"></div>
+    <div id="tradeTooltip" class="trade-tooltip"></div>
 
     <div class="loading" id="loadingBox">
       <div class="loading-title">LOADING DATA</div>
@@ -582,6 +691,8 @@
     loadingText: document.getElementById("loadingText"),
     chart: document.getElementById("chart"),
     chartWrap: document.getElementById("chartWrap"),
+    tradeOverlay: document.getElementById("tradeOverlay"),
+    tradeTooltip: document.getElementById("tradeTooltip"),
     infoSymbol: document.getElementById("infoSymbol"),
     infoTime: document.getElementById("infoTime"),
     infoOpen: document.getElementById("infoOpen"),
@@ -865,68 +976,186 @@
     return `${pnl >= 0 ? "+" : ""}${pnl}`;
   }
 
-  function tradeTimeToNearestVisibleTime(tradeTime) {
+  function tradeTimeToChartTime(tradeTime) {
     if (!currentData.length) return null;
 
+    const tf = Number(els.tf.value);
+    const period = tf * 60;
+    const targetBucket = Math.floor(tradeTime / period) * period;
     const first = currentData[0].time;
     const last = currentData[currentData.length - 1].time;
-    const maxGap = Number(els.tf.value) * 60 * 3;
+    const maxGap = Math.max(period * 3, 180);
 
-    if (tradeTime < first - maxGap || tradeTime > last + maxGap) {
+    if (targetBucket < first - maxGap || targetBucket > last + maxGap) {
       return null;
     }
 
-    const idx = findNearestIndexByTime(currentData, tradeTime);
+    const idx = findNearestIndexByTime(currentData, targetBucket);
     if (idx < 0) return null;
 
-    return currentData[idx].time;
+    const nearest = currentData[idx].time;
+    if (Math.abs(nearest - targetBucket) > maxGap) return null;
+
+    return nearest;
   }
 
-  function applyTradeMarkers() {
-    if (!candleSeries) return;
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function formatJstTimeFull(seconds) {
+    const d = new Date((seconds + 9 * 3600) * 1000);
+    const y = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    const h = String(d.getUTCHours()).padStart(2, "0");
+    const mi = String(d.getUTCMinutes()).padStart(2, "0");
+    const s = String(d.getUTCSeconds()).padStart(2, "0");
+    return `${y}-${mo}-${day} ${h}:${mi}:${s}`;
+  }
+
+  function formatDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "-";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }
+
+  function makeTradeTooltipHtml(pair, pointType) {
+    const isBuyEntry = pair.entry.side === "買";
+    const direction = isBuyEntry ? "LONG / BUY" : "SHORT / SELL";
+    const pnlClass = pair.pnl >= 0 ? "win" : "loss";
+    const pnlText = `${pair.pnl >= 0 ? "+" : ""}${Number.isFinite(pair.pnl) ? pair.pnl : 0} JPY`;
+    const duration = formatDuration(pair.exit.time - pair.entry.time);
+    const title = pointType === "entry" ? "Entry" : "Exit";
+    const point = pointType === "entry" ? pair.entry : pair.exit;
+
+    return `
+      <div class="tt-title">${title} · ${direction}</div>
+      <div class="tt-grid">
+        <div class="tt-label">Point</div><div class="tt-value">${escapeHtml(title)}</div>
+        <div class="tt-label">Time</div><div class="tt-value">${escapeHtml(formatJstTimeFull(point.time))} JST</div>
+        <div class="tt-label">Price</div><div class="tt-value">${escapeHtml(formatPrice(point.price))}</div>
+        <div class="tt-label">Entry</div><div class="tt-value">${escapeHtml(formatJstTimeFull(pair.entry.time))} · ${escapeHtml(formatPrice(pair.entry.price))}</div>
+        <div class="tt-label">Exit</div><div class="tt-value">${escapeHtml(formatJstTimeFull(pair.exit.time))} · ${escapeHtml(formatPrice(pair.exit.price))}</div>
+        <div class="tt-label">Duration</div><div class="tt-value">${escapeHtml(duration)}</div>
+        <div class="tt-label">PnL</div><div class="tt-value ${pnlClass}">${escapeHtml(pnlText)}</div>
+      </div>
+    `;
+  }
+
+  function hideTradeTooltip() {
+    if (!els.tradeTooltip) return;
+    els.tradeTooltip.style.display = "none";
+  }
+
+  function showTradeTooltip(html, event) {
+    if (!els.tradeTooltip) return;
+
+    els.tradeTooltip.innerHTML = html;
+    els.tradeTooltip.style.display = "block";
+    moveTradeTooltip(event);
+  }
+
+  function moveTradeTooltip(event) {
+    if (!els.tradeTooltip || els.tradeTooltip.style.display === "none") return;
+
+    const wrapRect = els.chartWrap.getBoundingClientRect();
+    const tooltipRect = els.tradeTooltip.getBoundingClientRect();
+
+    let left = event.clientX - wrapRect.left + 14;
+    let top = event.clientY - wrapRect.top - tooltipRect.height / 2;
+
+    const maxLeft = wrapRect.width - tooltipRect.width - 10;
+    const maxTop = wrapRect.height - tooltipRect.height - 10;
+
+    if (left > maxLeft) left = event.clientX - wrapRect.left - tooltipRect.width - 14;
+    top = Math.max(10, Math.min(maxTop, top));
+
+    els.tradeTooltip.style.left = `${left}px`;
+    els.tradeTooltip.style.top = `${top}px`;
+  }
+
+  function clearTradeOverlay() {
+    if (els.tradeOverlay) els.tradeOverlay.innerHTML = "";
+    hideTradeTooltip();
+  }
+
+  function renderTradeOverlays() {
+    if (!els.tradeOverlay || !chart || !candleSeries) return;
+
+    clearTradeOverlay();
 
     if (!els.showTradesCB.checked || !currentData.length || !tradePairs.length) {
-      candleSeries.setMarkers([]);
       return;
     }
 
-    const markers = [];
+    const fragment = document.createDocumentFragment();
 
     for (const pair of tradePairs) {
-      const entryTime = tradeTimeToNearestVisibleTime(pair.entry.time);
-      const exitTime = tradeTimeToNearestVisibleTime(pair.exit.time);
-
       const isBuyEntry = pair.entry.side === "買";
-      const entryColor = isBuyEntry ? "#f59e0b" : "#3b82f6";
-      const exitColor = pair.pnl >= 0 ? "#00e5a0" : "#f43f5e";
+      const entryChartTime = tradeTimeToChartTime(pair.entry.time);
+      const exitChartTime = tradeTimeToChartTime(pair.exit.time);
 
-      if (entryTime !== null) {
-        markers.push({
-          time: entryTime,
-          position: isBuyEntry ? "belowBar" : "aboveBar",
-          color: entryColor,
-          shape: isBuyEntry ? "arrowUp" : "arrowDown",
-          text: isBuyEntry ? "BUY" : "SELL"
-        });
-      }
+      const points = [
+        {
+          type: "entry",
+          chartTime: entryChartTime,
+          price: pair.entry.price,
+          className: `trade-point entry ${isBuyEntry ? "buy" : "sell"}`,
+          label: isBuyEntry ? "B" : "S",
+          tooltip: makeTradeTooltipHtml(pair, "entry")
+        },
+        {
+          type: "exit",
+          chartTime: exitChartTime,
+          price: pair.exit.price,
+          className: `trade-point exit ${pair.pnl >= 0 ? "win" : "loss"}`,
+          label: pair.pnl >= 0 ? "✓" : "×",
+          tooltip: makeTradeTooltipHtml(pair, "exit")
+        }
+      ];
 
-      if (exitTime !== null) {
-        markers.push({
-          time: exitTime,
-          position: isBuyEntry ? "aboveBar" : "belowBar",
-          color: exitColor,
-          shape: pair.pnl >= 0 ? "circle" : "square",
-          text: tradePnlText(pair.pnl)
-        });
+      for (const point of points) {
+        if (point.chartTime === null || !Number.isFinite(point.price)) continue;
+
+        const x = chart.timeScale().timeToCoordinate(point.chartTime);
+        const y = candleSeries.priceToCoordinate(point.price);
+
+        if (x === null || y === null || !Number.isFinite(x) || !Number.isFinite(y)) continue;
+
+        const node = document.createElement("div");
+        node.className = point.className;
+        node.textContent = point.label;
+        node.style.left = `${x}px`;
+        node.style.top = `${y}px`;
+        node.setAttribute("aria-label", point.type);
+
+        node.addEventListener("mouseenter", event => showTradeTooltip(point.tooltip, event));
+        node.addEventListener("mousemove", moveTradeTooltip);
+        node.addEventListener("mouseleave", hideTradeTooltip);
+
+        fragment.appendChild(node);
       }
     }
 
-    markers.sort((a, b) => {
-      if (a.time !== b.time) return a.time - b.time;
-      return String(a.text).localeCompare(String(b.text));
-    });
+    els.tradeOverlay.appendChild(fragment);
+  }
 
-    candleSeries.setMarkers(markers);
+  function applyTradeMarkers() {
+    if (candleSeries && typeof candleSeries.setMarkers === "function") {
+      candleSeries.setMarkers([]);
+    }
+    renderTradeOverlays();
   }
 
   async function loadTradeExcel(file) {
@@ -1074,9 +1303,14 @@
       if (candle) updateInfo({ time: param.time, ...candle });
     });
 
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+      renderTradeOverlays();
+    });
+
     resizeObserver = new ResizeObserver(entries => {
       const rect = entries[0].contentRect;
       chart.applyOptions({ width: Math.floor(rect.width), height: Math.floor(rect.height) });
+      renderTradeOverlays();
     });
 
     resizeObserver.observe(els.chartWrap);
@@ -1175,6 +1409,7 @@
     const to = Math.min(currentData.length + 10, index + rightPadding);
 
     chart.timeScale().setVisibleLogicalRange({ from, to });
+    renderTradeOverlays();
     updateInfo(currentData[index], currentData.length);
 
     const nearest = currentData[index];
@@ -1218,11 +1453,13 @@
     const length = currentData.length;
     const from = Math.max(0, length - 220);
     chart.timeScale().setVisibleLogicalRange({ from, to: length + 10 });
+    renderTradeOverlays();
   }
 
   function fitContent() {
     if (!currentData.length) return;
     chart.timeScale().fitContent();
+    renderTradeOverlays();
   }
 
   els.loadBtn.addEventListener("click", () => loadSelected());
