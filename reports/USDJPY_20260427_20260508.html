@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/>
+<title>USDJPY两周交易复盘报告｜增强版</title>
+<style>
+@page { size: A4 landscape; margin: 10mm; }
+* { box-sizing: border-box; }
+body { margin:0; background:#f3f5f7; color:#1f2937; font-family:'Noto Sans SC','Microsoft YaHei','PingFang SC','Hiragino Sans GB',Arial,sans-serif; line-height:1.55; }
+.page { max-width:1440px; margin:0 auto; padding:24px; }
+.hero { background:linear-gradient(135deg,#101827,#27384f); color:white; border-radius:22px; padding:30px 34px; box-shadow:0 10px 30px rgba(0,0,0,.13); margin-bottom:18px; }
+h1 { margin:0 0 8px; font-size:30px; }
+.hero p { margin:5px 0; color:#dbe7f5; }
+section { background:white; border:1px solid #d7dee8; border-radius:18px; padding:22px; margin:18px 0; box-shadow:0 6px 22px rgba(31,41,55,.05); }
+h2 { margin:0 0 14px; font-size:22px; border-left:5px solid #334155; padding-left:10px; }
+h3 { margin:18px 0 8px; font-size:17px; }
+.kpis { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin:14px 0; }
+.kpi-card,.card { background:white; border:1px solid #d7dee8; border-radius:15px; padding:13px 15px; box-shadow:0 4px 16px rgba(31,41,55,.05); }
+.kpi-label { color:#64748b; font-size:12px; }
+.kpi-value { font-size:23px; font-weight:800; margin-top:3px; }
+.kpi-sub { color:#64748b; font-size:12px; margin-top:2px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th,td { border:1px solid #d7dee8; padding:7px 8px; vertical-align:top; }
+th { background:#eef2f6; color:#111827; font-weight:700; position:sticky; top:0; }
+tr:nth-child(even) td { background:#fbfcfd; }
+.pos { color:#047857; font-weight:800; }
+.neg { color:#b91c1c; font-weight:800; }
+.note { color:#64748b; font-size:12px; }
+.small { color:#64748b; font-size:11px; }
+.badge { display:inline-block; border-radius:999px; padding:2px 7px; font-size:11px; font-weight:700; white-space:nowrap; }
+.b-good { background:#dcfce7; color:#166534; }
+.b-warn { background:#fef3c7; color:#92400e; }
+.b-bad { background:#fee2e2; color:#991b1b; }
+.b-neutral { background:#e0e7ff; color:#3730a3; }
+.trade-table { font-size:10.5px; }
+.trade-table th,.trade-table td { padding:5px 5px; }
+.table-wrap { overflow-x:auto; }
+ul { margin:8px 0 0 18px; padding:0; }
+li { margin:4px 0; }
+.callout { background:#f8fafc; border:1px solid #d7dee8; border-radius:14px; padding:14px 16px; }
+.footer { color:#64748b; text-align:center; font-size:11px; margin:24px 0 8px; }
+@media print { body { background:white; } .page { padding:0; max-width:none; } section,.hero { box-shadow:none; } .table-wrap { overflow:visible; } }
+@media (max-width:900px) { .kpis,.grid2,.grid3 { grid-template-columns:1fr; } .page { padding:12px; } }
+</style></head>
+<body><div class="page">
+<div class="hero">
+<h1>USDJPY 两周交易复盘报告｜增强版</h1>
+<p>范围：2026/04/27 - 2026/05/08，共47笔。新增：严格止盈/止损/持仓时间分类、MAE/MFE与MAE30/MFE30捕获率、按止盈止损数值本身分组统计。</p>
+<p>口径：1 JPY = 0.1 pips。买单按Bid作为可平仓价，空单按Ask作为可平仓价；因报价源差异，MFE/MAE不低于实际成交盈亏。</p>
+</div>
+
+<div class="kpis">
+<div class='kpi-card'><div class='kpi-label'>总交易数</div><div class='kpi-value'>47笔</div><div class='kpi-sub'>4/27 - 5/8</div></div>
+<div class='kpi-card'><div class='kpi-label'>胜率</div><div class='kpi-value'>61.7%</div><div class='kpi-sub'>29胜 / 18负</div></div>
+<div class='kpi-card'><div class='kpi-label'>净盈亏</div><div class='kpi-value'><span class='pos'>+231</span></div><div class='kpi-sub'>约 +23.1 pips</div></div>
+<div class='kpi-card'><div class='kpi-label'>盈亏比</div><div class='kpi-value'>1.74</div><div class='kpi-sub'>平均盈利 ÷ 平均亏损</div></div>
+<div class='kpi-card'><div class='kpi-label'>盈利因子</div><div class='kpi-value'>2.80</div><div class='kpi-sub'>总盈利 ÷ 总亏损</div></div>
+<div class='kpi-card'><div class='kpi-label'>单笔期望</div><div class='kpi-value'><span class='pos'>+4.9</span></div><div class='kpi-sub'>约 +0.49 pips</div></div>
+</div>
+
+<section>
+<h2>一、总览与系统判断</h2>
+<div class="grid3">
+<div class="card"><h3>系统状态</h3><p>47笔整体呈现正期望：胜率61.7%，盈亏比1.74，盈利因子2.80。说明它不是随机剥头皮，而是已具备可复盘的系统雏形。</p></div>
+<div class="card"><h3>优势来源</h3><p>主要来自急跌/低位反弹多、反弹/冲高失败空，以及强结构中的短线跟随。核心不是等1分钟收线，而是tick/L2微确认。</p></div>
+<div class="card"><h3>主要风险</h3><p>少数“观察区到了但没有有效微确认”的第一下，容易形成MAE大、MFE接近0的异常单。这是最该削减的尾部风险。</p></div>
+</div>
+<h3>基础统计</h3>
+<table class=''>
+<tr><th>指标A</th><th>数值A</th><th>指标B</th><th>数值B</th></tr>
+<tr><td class=''>总交易数</td><td class=''>47笔</td><td class=''>统计范围</td><td class=''>2026/04/27 - 2026/05/08</td></tr>
+<tr><td class=''>胜率</td><td class=''>61.7%</td><td class=''>盈利 / 亏损</td><td class=''>29 / 18</td></tr>
+<tr><td class=''>净盈亏</td><td class='pos'>231</td><td class=''>单笔期望</td><td class='pos'>4.9</td></tr>
+<tr><td class=''>平均盈利</td><td class='pos'>12.4</td><td class=''>平均亏损</td><td class='neg'>7.1</td></tr>
+<tr><td class=''>盈亏比</td><td class=''>1.74</td><td class=''>盈利因子</td><td class=''>2.80</td></tr>
+<tr><td class=''>最大回撤</td><td class='neg'>48</td><td class=''>最大连续亏损</td><td class=''>3笔</td></tr>
+<tr><td class=''>平均持仓</td><td class=''>1m19s</td><td class=''>中位持仓</td><td class=''>22s</td></tr>
+</table>
+</section>
+
+<section>
+<h2>二、严格分析：止盈、止损、持仓时间</h2>
+<div class="grid3">
+<div class="card"><h3>止盈结论</h3><ul>
+<li>止盈单29笔，总盈利 <b class="pos">+359</b>，平均止盈 <b>+12.4</b>，中位数 <b>+10</b>。</li>
+<li>+10以上止盈单共 <b>18</b> 笔，是主要盈利来源。</li>
+<li>整体MFE捕获率 <b>88.3%</b>，MFE30捕获率 <b>66.3%</b>。</li>
+</ul></div>
+<div class="card"><h3>止损结论</h3><ul>
+<li>止损单18笔，总亏损 <b class="neg">-128</b>，平均止损 <b>-7.1</b>，中位数 <b>-4</b>。</li>
+<li>-5以内亏损 <b>11</b> 笔，说明常规止损很小。</li>
+<li>-15以上异常止损 <b>4</b> 笔，是主要风险来源。</li>
+</ul></div>
+<div class="card"><h3>持仓时间结论</h3><ul>
+<li>平均持仓 1m19s，中位持仓 22s。</li>
+<li>平均值被少数长持仓拉高；真实常态更接近20秒级。</li>
+<li>120秒以上单子要单独标记，避免L2短线单变形。</li>
+</ul></div>
+</div>
+</section>
+
+<section>
+<h2>三、按止盈数值本身分组统计</h2>
+<p class="note">这一节只看盈利单，按照实际止盈金额本身分组。止盈捕获率 = 实际止盈 ÷ MFE；MFE30捕获率 = 实际止盈 ÷ MFE30。后者越低，说明平仓后30秒内还有更多未吃到的顺向空间。</p>
+<div class="table-wrap"><table class=''>
+<tr><th>止盈区间</th><th>笔数</th><th>总盈利</th><th>平均止盈</th><th>平均持仓</th><th>平均MFE</th><th>平均MFE30</th><th>MFE捕获率</th><th>MFE30捕获率</th><th>盈利贡献</th></tr>
+<tr><td class=''>+1~+5</td><td class=''>5</td><td class='pos'>15</td><td class=''>3</td><td class=''>59s</td><td class=''>11.4</td><td class=''>17.2</td><td class=''>59.3%</td><td class=''>20.1%</td><td class=''>4.2%</td></tr>
+<tr><td class=''>+6~+10</td><td class=''>10</td><td class='pos'>87</td><td class=''>8.7</td><td class=''>46s</td><td class=''>10</td><td class=''>12.4</td><td class=''>91.3%</td><td class=''>78.6%</td><td class=''>24.2%</td></tr>
+<tr><td class=''>+11~+15</td><td class=''>6</td><td class='pos'>75</td><td class=''>12.5</td><td class=''>25s</td><td class=''>12.5</td><td class=''>21.7</td><td class=''>100.0%</td><td class=''>69.2%</td><td class=''>20.9%</td></tr>
+<tr><td class=''>+16~+20</td><td class=''>3</td><td class='pos'>57</td><td class=''>19</td><td class=''>14s</td><td class=''>22.3</td><td class=''>34.3</td><td class=''>87.5%</td><td class=''>55.7%</td><td class=''>15.9%</td></tr>
+<tr><td class=''>+21以上</td><td class=''>5</td><td class='pos'>125</td><td class=''>25</td><td class=''>4m33s</td><td class=''>25.6</td><td class=''>28.2</td><td class=''>97.7%</td><td class=''>90.6%</td><td class=''>34.8%</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>四、按止损数值本身分组统计</h2>
+<p class="note">这一节只看亏损单，按照实际止损金额绝对值分组。亏损/MAE 与 亏损/MAE30 不是越高越好；它表示你实际吃掉了多少不利波动。越低通常说明止损及时、避免了后续更大不利，但也要结合是否止损后修复。</p>
+<div class="table-wrap"><table class=''>
+<tr><th>止损区间</th><th>笔数</th><th>总亏损</th><th>平均止损</th><th>平均持仓</th><th>平均MAE</th><th>平均MAE30</th><th>亏损/MAE</th><th>亏损/MAE30</th><th>平均规避30秒后不利</th><th>亏损贡献</th></tr>
+<tr><td class=''>-1~-5</td><td class=''>11</td><td class='neg'>29</td><td class=''>2.6</td><td class=''>45s</td><td class=''>10.9</td><td class=''>14.5</td><td class=''>37.6%</td><td class=''>31.9%</td><td class=''>11.9</td><td class=''>22.7%</td></tr>
+<tr><td class=''>-6~-10</td><td class=''>3</td><td class='neg'>23</td><td class=''>7.7</td><td class=''>25s</td><td class=''>9.3</td><td class=''>14</td><td class=''>84.4%</td><td class=''>64.8%</td><td class=''>6.3</td><td class=''>18.0%</td></tr>
+<tr><td class=''>-11~-15</td><td class=''>1</td><td class='neg'>15</td><td class=''>15</td><td class=''>2s</td><td class=''>19</td><td class=''>19</td><td class=''>78.9%</td><td class=''>78.9%</td><td class=''>4</td><td class=''>11.7%</td></tr>
+<tr><td class=''>-16~-20</td><td class=''>2</td><td class='neg'>39</td><td class=''>19.5</td><td class=''>6m04s</td><td class=''>32</td><td class=''>33</td><td class=''>67.0%</td><td class=''>63.4%</td><td class=''>13.5</td><td class=''>30.5%</td></tr>
+<tr><td class=''>-21以下</td><td class=''>1</td><td class='neg'>22</td><td class=''>22</td><td class=''>1m44s</td><td class=''>32</td><td class=''>33</td><td class=''>68.8%</td><td class=''>66.7%</td><td class=''>11</td><td class=''>17.2%</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>五、止盈捕获率：按交易类型分类</h2>
+<p class="note">这一节回答：哪些类型的盈利单最容易吃到MFE，哪些类型平仓后30秒仍有明显空间。</p>
+<div class="table-wrap"><table class=''>
+<tr><th>交易类型</th><th>盈利笔数</th><th>总盈利</th><th>平均止盈</th><th>平均MFE</th><th>平均MFE30</th><th>MFE捕获率</th><th>MFE30捕获率</th><th>平均回吐</th><th>平仓后额外空间</th><th>平均持仓</th></tr>
+<tr><td class=''>急跌/低位反弹多</td><td class=''>11</td><td class='pos'>141</td><td class=''>12.8</td><td class=''>13.8</td><td class=''>19.5</td><td class=''>96.4%</td><td class=''>69.9%</td><td class=''>1</td><td class=''>6.7</td><td class=''>30s</td></tr>
+<tr><td class=''>反弹/冲高失败空</td><td class=''>8</td><td class='pos'>104</td><td class=''>13</td><td class=''>15.5</td><td class=''>20</td><td class=''>81.4%</td><td class=''>68.5%</td><td class=''>2.5</td><td class=''>7</td><td class=''>1m00s</td></tr>
+<tr><td class=''>顺势动能/强结构跟随</td><td class=''>5</td><td class='pos'>68</td><td class=''>13.6</td><td class=''>14.2</td><td class=''>22.2</td><td class=''>95.0%</td><td class=''>71.0%</td><td class=''>0.6</td><td class=''>8.6</td><td class=''>12s</td></tr>
+<tr><td class=''>价格行为方向单</td><td class=''>1</td><td class='pos'>26</td><td class=''>26</td><td class=''>27</td><td class=''>27</td><td class=''>96.3%</td><td class=''>96.3%</td><td class=''>1</td><td class=''>1</td><td class=''>19m39s</td></tr>
+<tr><td class=''>其他</td><td class=''>4</td><td class='pos'>20</td><td class=''>5</td><td class=''>13.2</td><td class=''>17.8</td><td class=''>69.5%</td><td class=''>38.2%</td><td class=''>8.2</td><td class=''>12.8</td><td class=''>1m05s</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>六、止损捕获/控制率：按交易类型分类</h2>
+<p class="note">这里的“止损捕获/控制率”用亏损占MAE/MAE30比例表达。它不是传统意义的盈利捕获率，而是风险控制视角：实际亏损吃掉了最大不利波动的多少。</p>
+<div class="table-wrap"><table class=''>
+<tr><th>交易类型</th><th>亏损笔数</th><th>总亏损</th><th>平均止损</th><th>平均MAE</th><th>平均MAE30</th><th>亏损/MAE</th><th>亏损/MAE30</th><th>平均规避30秒后不利</th><th>平均持仓</th></tr>
+<tr><td class=''>急跌/低位反弹多</td><td class=''>1</td><td class='neg'>3</td><td class=''>3</td><td class=''>8</td><td class=''>16</td><td class=''>37.5%</td><td class=''>18.8%</td><td class=''>13</td><td class=''>24s</td></tr>
+<tr><td class=''>反弹/冲高失败空</td><td class=''>3</td><td class='neg'>29</td><td class=''>9.7</td><td class=''>18</td><td class=''>18.3</td><td class=''>65.9%</td><td class=''>61.1%</td><td class=''>8.7</td><td class=''>4m27s</td></tr>
+<tr><td class=''>提前/追尾试单</td><td class=''>8</td><td class='neg'>84</td><td class=''>10.5</td><td class=''>20</td><td class=''>23.5</td><td class=''>57.7%</td><td class=''>47.2%</td><td class=''>13</td><td class=''>48s</td></tr>
+<tr><td class=''>震荡/区间试单</td><td class=''>3</td><td class='neg'>4</td><td class=''>1.3</td><td class=''>4.3</td><td class=''>10.3</td><td class=''>38.1%</td><td class=''>34.7%</td><td class=''>9</td><td class=''>54s</td></tr>
+<tr><td class=''>其他</td><td class=''>3</td><td class='neg'>8</td><td class=''>2.7</td><td class=''>9.3</td><td class=''>10</td><td class=''>45.7%</td><td class=''>44.6%</td><td class=''>7.3</td><td class=''>10s</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>七、持仓时间分类统计</h2>
+<p class="note">对秒级剥头皮而言，中位数持仓和分档表现比平均持仓更有意义。</p>
+<div class="table-wrap"><table class=''>
+<tr><th>持仓区间</th><th>笔数</th><th>胜 / 负</th><th>胜率</th><th>净盈亏</th><th>单笔期望</th><th>平均MAE</th><th>平均MFE</th><th>平均MAE30</th><th>平均MFE30</th></tr>
+<tr><td class=''>0~10秒</td><td class=''>11</td><td class=''>7 / 4</td><td class=''>63.6%</td><td class='pos'>52</td><td class='pos'>4.7</td><td class=''>7.8</td><td class=''>7.6</td><td class=''>9.3</td><td class=''>16.2</td></tr>
+<tr><td class=''>11~30秒</td><td class=''>17</td><td class=''>10 / 7</td><td class=''>58.8%</td><td class='pos'>92</td><td class='pos'>5.4</td><td class=''>10.7</td><td class=''>8.5</td><td class=''>11.8</td><td class=''>12.8</td></tr>
+<tr><td class=''>31~60秒</td><td class=''>5</td><td class=''>3 / 2</td><td class=''>60.0%</td><td class='pos'>36</td><td class='pos'>7.2</td><td class=''>8</td><td class=''>9</td><td class=''>13</td><td class=''>10.6</td></tr>
+<tr><td class=''>61~120秒</td><td class=''>8</td><td class=''>6 / 2</td><td class=''>75.0%</td><td class='pos'>41</td><td class='pos'>5.1</td><td class=''>11.2</td><td class=''>10.6</td><td class=''>12.9</td><td class=''>11.2</td></tr>
+<tr><td class=''>120秒以上</td><td class=''>6</td><td class=''>3 / 3</td><td class=''>50.0%</td><td class='pos'>10</td><td class='pos'>1.7</td><td class=''>27.2</td><td class=''>11.7</td><td class=''>30.2</td><td class=''>11.7</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>八、交易类型分类统计</h2>
+<p class="note">你的系统不是单一策略，而是观察框架下的多类短线机会。分类后的期望值比总胜率更有解释力。本版已补充平均MFE和平均MAE30，四个浮动指标可以横向对照。</p>
+<div class="table-wrap"><table class=''>
+<tr><th>交易类型</th><th>笔数</th><th>胜 / 负</th><th>胜率</th><th>净盈亏</th><th>单笔期望</th><th>盈亏比</th><th>盈利因子</th><th>中位持仓</th><th>平均MAE</th><th>平均MFE</th><th>平均MAE30</th><th>平均MFE30</th></tr>
+<tr><td class=''>急跌/低位反弹多</td><td class=''>12</td><td class=''>11 / 1</td><td class=''>91.7%</td><td class='pos'>138</td><td class='pos'>11.5</td><td class=''>4.27</td><td class=''>47.00</td><td class=''>23s</td><td class=''>10.6</td><td class=''>12.7</td><td class=''>14.1</td><td class=''>17.9</td></tr>
+<tr><td class=''>反弹/冲高失败空</td><td class=''>11</td><td class=''>8 / 3</td><td class=''>72.7%</td><td class='pos'>75</td><td class='pos'>6.8</td><td class=''>1.34</td><td class=''>3.59</td><td class=''>44s</td><td class=''>9</td><td class=''>11.3</td><td class=''>9.1</td><td class=''>14.5</td></tr>
+<tr><td class=''>顺势动能/强结构跟随</td><td class=''>5</td><td class=''>5 / 0</td><td class=''>100.0%</td><td class='pos'>68</td><td class='pos'>13.6</td><td class=''>-</td><td class=''>-</td><td class=''>11s</td><td class=''>8.2</td><td class=''>14.2</td><td class=''>8.2</td><td class=''>22.2</td></tr>
+<tr><td class=''>提前/追尾试单</td><td class=''>8</td><td class=''>0 / 8</td><td class=''>0.0%</td><td class='neg'>-84</td><td class='neg'>-10.5</td><td class=''>-</td><td class=''>0</td><td class=''>25s</td><td class=''>20</td><td class=''>0.1</td><td class=''>23.5</td><td class=''>1.5</td></tr>
+<tr><td class=''>震荡/区间试单</td><td class=''>3</td><td class=''>0 / 3</td><td class=''>0.0%</td><td class='neg'>-4</td><td class='neg'>-1.3</td><td class=''>-</td><td class=''>0</td><td class=''>18s</td><td class=''>4.3</td><td class=''>0</td><td class=''>10.3</td><td class=''>0</td></tr>
+<tr><td class=''>价格行为方向单</td><td class=''>1</td><td class=''>1 / 0</td><td class=''>100.0%</td><td class='pos'>26</td><td class='pos'>26</td><td class=''>-</td><td class=''>-</td><td class=''>19m39s</td><td class=''>46</td><td class=''>27</td><td class=''>46</td><td class=''>27</td></tr>
+<tr><td class=''>其他</td><td class=''>7</td><td class=''>4 / 3</td><td class=''>57.1%</td><td class='pos'>12</td><td class='pos'>1.7</td><td class=''>1.88</td><td class=''>2.50</td><td class=''>19s</td><td class=''>10.7</td><td class=''>7.6</td><td class=''>11</td><td class=''>12</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>九、MAE / MFE 与 MAE30 / MFE30 深入统计</h2>
+<div class="grid2">
+<div class="callout"><h3>指标解释</h3>
+<ul>
+<li><b>MAE</b>：持仓期间最大不利浮动。</li>
+<li><b>MFE</b>：持仓期间最大有利浮动。</li>
+<li><b>MAE30 / MFE30</b>：从入场到平仓后30秒为止的最大不利/有利浮动。</li>
+<li><b>MFE30时间</b>：从入场开始，到MFE30出现的秒数；若大于持仓时间，说明最大顺向空间发生在平仓后。</li>
+</ul></div>
+<div class="callout"><h3>关键结论</h3>
+<ul>
+<li>平均MAE 11.9，中位数MAE 8。</li>
+<li>平均MFE30 13.0，说明平仓后30秒内确实有不少额外顺向空间。</li>
+<li>MAE &gt; 20 的区域整体净值转弱，是重点风险区。</li>
+</ul></div>
+</div>
+<h3>MAE区间分类统计</h3>
+<div class="table-wrap"><table class=''>
+<tr><th>MAE区间</th><th>笔数</th><th>胜 / 负</th><th>胜率</th><th>净盈亏</th><th>单笔期望</th><th>平均MAE</th><th>平均MFE</th><th>平均MAE30</th><th>平均MFE30</th></tr>
+<tr><td class=''>≤5</td><td class=''>14</td><td class=''>11 / 3</td><td class=''>78.6%</td><td class='pos'>117</td><td class='pos'>8.4</td><td class=''>3.6</td><td class=''>9.1</td><td class=''>4.3</td><td class=''>13.4</td></tr>
+<tr><td class=''>6~10</td><td class=''>16</td><td class=''>9 / 7</td><td class=''>56.2%</td><td class='pos'>61</td><td class='pos'>3.8</td><td class=''>7.6</td><td class=''>6.6</td><td class=''>10.9</td><td class=''>10.6</td></tr>
+<tr><td class=''>11~20</td><td class=''>10</td><td class=''>6 / 4</td><td class=''>60.0%</td><td class='pos'>86</td><td class='pos'>8.6</td><td class=''>14.6</td><td class=''>12.8</td><td class=''>17.2</td><td class=''>17.4</td></tr>
+<tr><td class=''>>20</td><td class=''>7</td><td class=''>3 / 4</td><td class=''>42.9%</td><td class='neg'>-33</td><td class='neg'>-4.7</td><td class=''>34.7</td><td class=''>9.4</td><td class=''>35.1</td><td class=''>11.1</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>十、47笔逐笔明细</h2>
+<p class="note">逐笔表包括：入场/出场、交易类型、MAE/MFE、MAE30/MFE30、MFE30出现时间、止盈/止损捕获率、出场标签。</p>
+<div class="table-wrap"><table class='trade-table'>
+<tr><th>#</th><th>入场/出场</th><th>方向</th><th>盈亏</th><th>持仓</th><th>入场类型</th><th>分类</th><th>MAE/MFE</th><th>MAE30/MFE30</th><th>MFE30时间</th><th>捕获/控制率</th><th>出场标签</th><th>补充</th></tr>
+<tr><td class=''>1</td><td class=''>04/27 08:30:27<br/>→ 08:31:08</td><td class=''>空</td><td class='neg'>-3</td><td class=''>41s</td><td class=''>高位试空</td><td class=''>反弹/冲高失败空</td><td class=''>6 / 0</td><td class=''>6 / 0</td><td class=''>13.5s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 50.0%<br/>亏损/MAE30 50.0%</td><td class=''><span class='badge b-neutral'>止损可接受</span></td><td class=''>止损后规避 3</td></tr>
+<tr><td class=''>2</td><td class=''>04/27 08:32:22<br/>→ 08:34:29</td><td class=''>空</td><td class='pos'>6</td><td class=''>2m07s</td><td class=''>反弹高位空</td><td class=''>反弹/冲高失败空</td><td class=''>4 / 7</td><td class=''>4 / 7</td><td class=''>96.1s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 85.7%<br/>MFE30捕获 85.7%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 1<br/>平后额外 1</td></tr>
+<tr><td class=''>3</td><td class=''>04/27 08:45:44<br/>→ 08:46:54</td><td class=''>空</td><td class='neg'>-4</td><td class=''>1m10s</td><td class=''>低位追空</td><td class=''>提前/追尾试单</td><td class=''>8 / 0</td><td class=''>20 / 0</td><td class=''>0.4s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 50.0%<br/>亏损/MAE30 20.0%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 16</td></tr>
+<tr><td class=''>4</td><td class=''>04/27 09:08:45<br/>→ 09:09:28</td><td class=''>空</td><td class='pos'>15</td><td class=''>43s</td><td class=''>回抽关键区空</td><td class=''>反弹/冲高失败空</td><td class=''>5 / 15</td><td class=''>5 / 16</td><td class=''>70.4s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 93.8%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 1</td></tr>
+<tr><td class=''>5</td><td class=''>04/27 09:30:09<br/>→ 09:30:28</td><td class=''>空</td><td class='neg'>-3</td><td class=''>19s</td><td class=''>低位试空</td><td class=''>其他</td><td class=''>10 / 0</td><td class=''>11 / 0</td><td class=''>34.4s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 30.0%<br/>亏损/MAE30 27.3%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 8</td></tr>
+<tr><td class=''>6</td><td class=''>04/27 09:53:39<br/>→ 09:56:15</td><td class=''>空</td><td class='pos'>4</td><td class=''>2m36s</td><td class=''>上冲后试空</td><td class=''>其他</td><td class=''>24 / 35</td><td class=''>24 / 35</td><td class=''>67.4s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 11.4%<br/>MFE30捕获 11.4%</td><td class=''><span class='badge b-warn'>等过头/回吐</span></td><td class=''>回吐 31<br/>平后额外 31</td></tr>
+<tr><td class=''>7</td><td class=''>04/27 10:02:21<br/>→ 10:04:44</td><td class=''>空</td><td class='neg'>-5</td><td class=''>2m23s</td><td class=''>急跌末端追空</td><td class=''>提前/追尾试单</td><td class=''>40 / 1</td><td class=''>40 / 1</td><td class=''>17.2s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 12.5%<br/>亏损/MAE30 12.5%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 35</td></tr>
+<tr><td class=''>8</td><td class=''>04/27 10:05:30<br/>→ 10:05:34</td><td class=''>多</td><td class='pos'>11</td><td class=''>4s</td><td class=''>急跌后反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>7 / 11</td><td class=''>7 / 26</td><td class=''>33.5s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 42.3%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 0<br/>平后额外 15</td></tr>
+<tr><td class=''>9</td><td class=''>04/27 10:09:43<br/>→ 10:09:49</td><td class=''>空</td><td class='pos'>20</td><td class=''>6s</td><td class=''>反弹后再空</td><td class=''>反弹/冲高失败空</td><td class=''>3 / 20</td><td class=''>3 / 39</td><td class=''>25s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 51.3%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 0<br/>平后额外 19</td></tr>
+<tr><td class=''>10</td><td class=''>04/28 08:51:46<br/>→ 08:52:01</td><td class=''>空</td><td class='pos'>10</td><td class=''>15s</td><td class=''>下行动能跟随空</td><td class=''>顺势动能/强结构跟随</td><td class=''>0 / 10</td><td class=''>0 / 10</td><td class=''>36.5s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>11</td><td class=''>04/28 09:20:48<br/>→ 09:21:10</td><td class=''>空</td><td class='pos'>2</td><td class=''>22s</td><td class=''>上冲后小空</td><td class=''>其他</td><td class=''>7 / 2</td><td class=''>7 / 14</td><td class=''>33.5s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 14.3%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 0<br/>平后额外 12</td></tr>
+<tr><td class=''>12</td><td class=''>04/28 09:36:05<br/>→ 09:36:23</td><td class=''>多</td><td class='neg'>-1</td><td class=''>18s</td><td class=''>震荡试多</td><td class=''>震荡/区间试单</td><td class=''>3 / 0</td><td class=''>3 / 0</td><td class=''>21.3s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 33.3%<br/>亏损/MAE30 33.3%</td><td class=''><span class='badge b-neutral'>止损可接受</span></td><td class=''>止损后规避 2</td></tr>
+<tr><td class=''>13</td><td class=''>04/28 09:55:00<br/>→ 09:56:39</td><td class=''>空</td><td class='pos'>10</td><td class=''>1m39s</td><td class=''>冲高失败空</td><td class=''>反弹/冲高失败空</td><td class=''>9 / 19</td><td class=''>9 / 19</td><td class=''>61.8s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 52.6%<br/>MFE30捕获 52.6%</td><td class=''><span class='badge b-warn'>等过头/回吐</span></td><td class=''>回吐 9<br/>平后额外 9</td></tr>
+<tr><td class=''>14</td><td class=''>04/28 12:35:04<br/>→ 12:35:23</td><td class=''>多</td><td class='pos'>19</td><td class=''>19s</td><td class=''>急跌末端反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>11 / 28</td><td class=''>11 / 31</td><td class=''>32.9s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 67.9%<br/>MFE30捕获 61.3%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 9<br/>平后额外 12</td></tr>
+<tr><td class=''>15</td><td class=''>04/29 10:07:51<br/>→ 10:08:04</td><td class=''>空</td><td class='neg'>-19</td><td class=''>13s</td><td class=''>上冲未失败提前空</td><td class=''>提前/追尾试单</td><td class=''>22 / 0</td><td class=''>24 / 0</td><td class=''>1.8s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 86.4%<br/>亏损/MAE30 79.2%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 5</td></tr>
+<tr><td class=''>16</td><td class=''>04/29 10:08:06<br/>→ 10:08:36</td><td class=''>空</td><td class='neg'>-10</td><td class=''>30s</td><td class=''>第二次提前空</td><td class=''>提前/追尾试单</td><td class=''>12 / 0</td><td class=''>13 / 4</td><td class=''>59.5s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 83.3%<br/>亏损/MAE30 76.9%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 3</td></tr>
+<tr><td class=''>17</td><td class=''>04/29 10:08:59<br/>→ 10:10:12</td><td class=''>空</td><td class='pos'>10</td><td class=''>1m13s</td><td class=''>高点确认后空</td><td class=''>其他</td><td class=''>14 / 10</td><td class=''>14 / 11</td><td class=''>101.5s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 90.9%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 1</td></tr>
+<tr><td class=''>18</td><td class=''>04/29 10:11:14<br/>→ 10:11:23</td><td class=''>空</td><td class='pos'>4</td><td class=''>9s</td><td class=''>回落延续空</td><td class=''>其他</td><td class=''>2 / 6</td><td class=''>2 / 11</td><td class=''>22.5s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 66.7%<br/>MFE30捕获 36.4%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 2<br/>平后额外 7</td></tr>
+<tr><td class=''>19</td><td class=''>04/29 10:26:30<br/>→ 10:26:43</td><td class=''>空</td><td class='neg'>-2</td><td class=''>13s</td><td class=''>区间试空</td><td class=''>震荡/区间试单</td><td class=''>3 / 0</td><td class=''>3 / 0</td><td class=''>0s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 66.7%<br/>亏损/MAE30 66.7%</td><td class=''><span class='badge b-neutral'>止损可接受</span></td><td class=''>止损后规避 1</td></tr>
+<tr><td class=''>20</td><td class=''>04/29 10:31:16<br/>→ 10:31:18</td><td class=''>多</td><td class='neg'>-15</td><td class=''>2s</td><td class=''>急跌中提前接多</td><td class=''>提前/追尾试单</td><td class=''>19 / 0</td><td class=''>19 / 3</td><td class=''>29.5s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 78.9%<br/>亏损/MAE30 78.9%</td><td class=''><span class='badge b-neutral'>止损可接受</span></td><td class=''>止损后规避 4</td></tr>
+<tr><td class=''>21</td><td class=''>04/29 10:31:20<br/>→ 10:31:40</td><td class=''>多</td><td class='pos'>11</td><td class=''>20s</td><td class=''>第二次急跌反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>5 / 11</td><td class=''>5 / 24</td><td class=''>42.8s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 45.8%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 0<br/>平后额外 13</td></tr>
+<tr><td class=''>22</td><td class=''>04/29 10:47:06<br/>→ 10:59:01</td><td class=''>空</td><td class='neg'>-20</td><td class=''>11m55s</td><td class=''>反弹空失败/短线单变形</td><td class=''>反弹/冲高失败空</td><td class=''>42 / 0</td><td class=''>42 / 0</td><td class=''>0.1s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 47.6%<br/>亏损/MAE30 47.6%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 22</td></tr>
+<tr><td class=''>23</td><td class=''>04/29 11:13:19<br/>→ 11:14:03</td><td class=''>空</td><td class='neg'>-6</td><td class=''>44s</td><td class=''>震荡高位试空</td><td class=''>反弹/冲高失败空</td><td class=''>6 / 0</td><td class=''>7 / 0</td><td class=''>2.5s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 100.0%<br/>亏损/MAE30 85.7%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 1</td></tr>
+<tr><td class=''>24</td><td class=''>04/29 11:15:29<br/>→ 11:17:40</td><td class=''>多</td><td class='neg'>-1</td><td class=''>2m11s</td><td class=''>震荡上沿试多</td><td class=''>震荡/区间试单</td><td class=''>7 / 0</td><td class=''>25 / 0</td><td class=''>42.8s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 14.3%<br/>亏损/MAE30 4.0%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 24</td></tr>
+<tr><td class=''>25</td><td class=''>04/29 11:18:41<br/>→ 11:19:47</td><td class=''>多</td><td class='pos'>13</td><td class=''>1m06s</td><td class=''>区间下沿反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>6 / 13</td><td class=''>6 / 13</td><td class=''>95.3s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>26</td><td class=''>04/29 15:53:10<br/>→ 15:54:32</td><td class=''>空</td><td class='pos'>2</td><td class=''>1m22s</td><td class=''>反弹高位空</td><td class=''>反弹/冲高失败空</td><td class=''>8 / 11</td><td class=''>8 / 11</td><td class=''>31.8s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 18.2%<br/>MFE30捕获 18.2%</td><td class=''><span class='badge b-warn'>等过头/回吐</span></td><td class=''>回吐 9<br/>平后额外 9</td></tr>
+<tr><td class=''>27</td><td class=''>04/29 16:01:32<br/>→ 16:21:11</td><td class=''>多</td><td class='pos'>26</td><td class=''>19m39s</td><td class=''>价格行为方向多</td><td class=''>价格行为方向单</td><td class=''>46 / 27</td><td class=''>46 / 27</td><td class=''>1178.1s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 96.3%<br/>MFE30捕获 96.3%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 1<br/>平后额外 1</td></tr>
+<tr><td class=''>28</td><td class=''>04/30 09:03:47<br/>→ 09:04:07</td><td class=''>空</td><td class='neg'>-2</td><td class=''>20s</td><td class=''>反抽未失败试空</td><td class=''>提前/追尾试单</td><td class=''>17 / 0</td><td class=''>17 / 4</td><td class=''>22.8s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 11.8%<br/>亏损/MAE30 11.8%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 15</td></tr>
+<tr><td class=''>29</td><td class=''>04/30 09:07:30<br/>→ 09:07:35</td><td class=''>空</td><td class='pos'>9</td><td class=''>5s</td><td class=''>下行动能跟随空</td><td class=''>顺势动能/强结构跟随</td><td class=''>11 / 12</td><td class=''>11 / 25</td><td class=''>30s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 75.0%<br/>MFE30捕获 36.0%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 3<br/>平后额外 16</td></tr>
+<tr><td class=''>30</td><td class=''>04/30 09:09:09<br/>→ 09:09:33</td><td class=''>多</td><td class='neg'>-3</td><td class=''>24s</td><td class=''>急跌后试多</td><td class=''>急跌/低位反弹多</td><td class=''>8 / 0</td><td class=''>16 / 0</td><td class=''>1s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 37.5%<br/>亏损/MAE30 18.8%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 13</td></tr>
+<tr><td class=''>31</td><td class=''>04/30 09:10:07<br/>→ 09:10:26</td><td class=''>多</td><td class='pos'>9</td><td class=''>19s</td><td class=''>第二次低位反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>3 / 9</td><td class=''>10 / 9</td><td class=''>18.9s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>32</td><td class=''>04/30 09:29:50<br/>→ 09:29:58</td><td class=''>空</td><td class='neg'>-4</td><td class=''>8s</td><td class=''>低点抬高中试空</td><td class=''>其他</td><td class=''>4 / 0</td><td class=''>4 / 6</td><td class=''>28.8s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 100.0%<br/>亏损/MAE30 100.0%</td><td class=''><span class='badge b-warn'>止损后有修复</span></td><td class=''>止损后规避 0</td></tr>
+<tr><td class=''>33</td><td class=''>04/30 09:56:02<br/>→ 09:56:06</td><td class=''>空</td><td class='pos'>10</td><td class=''>4s</td><td class=''>整数位冲高失败空</td><td class=''>反弹/冲高失败空</td><td class=''>5 / 10</td><td class=''>5 / 10</td><td class=''>3s<br/><span class='small'>持仓内</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>34</td><td class=''>05/01 08:48:05<br/>→ 08:48:16</td><td class=''>多</td><td class='pos'>6</td><td class=''>11s</td><td class=''>顺势跟随多</td><td class=''>顺势动能/强结构跟随</td><td class=''>8 / 6</td><td class=''>8 / 7</td><td class=''>15s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 85.7%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 1</td></tr>
+<tr><td class=''>35</td><td class=''>05/01 08:49:20<br/>→ 08:49:24</td><td class=''>空</td><td class='neg'>-1</td><td class=''>4s</td><td class=''>第一笔试空偏早</td><td class=''>其他</td><td class=''>14 / 0</td><td class=''>15 / 7</td><td class=''>32.5s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 7.1%<br/>亏损/MAE30 6.7%</td><td class=''><span class='badge b-warn'>止损后有修复</span></td><td class=''>止损后规避 14</td></tr>
+<tr><td class=''>36</td><td class=''>05/01 08:49:37<br/>→ 08:49:53</td><td class=''>空</td><td class='pos'>18</td><td class=''>16s</td><td class=''>第二次冲高失败空</td><td class=''>反弹/冲高失败空</td><td class=''>3 / 19</td><td class=''>3 / 33</td><td class=''>21.2s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 94.7%<br/>MFE30捕获 54.5%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 1<br/>平后额外 15</td></tr>
+<tr><td class=''>37</td><td class=''>05/01 09:08:30<br/>→ 09:08:58</td><td class=''>多</td><td class='pos'>3</td><td class=''>28s</td><td class=''>急跌反弹试多</td><td class=''>急跌/低位反弹多</td><td class=''>37 / 3</td><td class=''>37 / 15</td><td class=''>55.3s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 20.0%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 0<br/>平后额外 12</td></tr>
+<tr><td class=''>38</td><td class=''>05/01 09:11:44<br/>→ 09:11:49</td><td class=''>多</td><td class='pos'>12</td><td class=''>5s</td><td class=''>二次低位反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>5 / 12</td><td class=''>8 / 12</td><td class=''>29.7s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>39</td><td class=''>05/01 09:25:40<br/>→ 09:25:50</td><td class=''>多</td><td class='pos'>13</td><td class=''>10s</td><td class=''>强势推进跟随多</td><td class=''>顺势动能/强结构跟随</td><td class=''>6 / 13</td><td class=''>6 / 39</td><td class=''>32s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 33.3%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 0<br/>平后额外 26</td></tr>
+<tr><td class=''>40</td><td class=''>05/01 09:30:19<br/>→ 09:30:36</td><td class=''>多</td><td class='pos'>30</td><td class=''>17s</td><td class=''>强结构回调后多</td><td class=''>顺势动能/强结构跟随</td><td class=''>16 / 30</td><td class=''>16 / 30</td><td class=''>21.5s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>41</td><td class=''>05/07 08:57:46<br/>→ 08:59:30</td><td class=''>空</td><td class='neg'>-22</td><td class=''>1m44s</td><td class=''>上冲未失败猜顶空</td><td class=''>提前/追尾试单</td><td class=''>32 / 0</td><td class=''>33 / 0</td><td class=''>4.5s<br/><span class='small'>持仓内</span></td><td class=''>亏损/MAE 68.8%<br/>亏损/MAE30 66.7%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 11</td></tr>
+<tr><td class=''>42</td><td class=''>05/07 09:01:32<br/>→ 09:02:21</td><td class=''>多</td><td class='pos'>22</td><td class=''>49s</td><td class=''>急跌后反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>15 / 22</td><td class=''>39 / 22</td><td class=''>55.1s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 100.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 0</td></tr>
+<tr><td class=''>43</td><td class=''>05/07 09:11:48<br/>→ 09:12:10</td><td class=''>多</td><td class='pos'>24</td><td class=''>22s</td><td class=''>大阴线后目标区反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>17 / 26</td><td class=''>17 / 37</td><td class=''>23.3s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 92.3%<br/>MFE30捕获 64.9%</td><td class=''><span class='badge b-warn'>可能早退</span></td><td class=''>回吐 2<br/>平后额外 13</td></tr>
+<tr><td class=''>44</td><td class=''>05/07 09:18:22<br/>→ 09:20:02</td><td class=''>空</td><td class='pos'>23</td><td class=''>1m40s</td><td class=''>反弹高位回落空</td><td class=''>反弹/冲高失败空</td><td class=''>8 / 23</td><td class=''>8 / 25</td><td class=''>114.3s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 92.0%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 2</td></tr>
+<tr><td class=''>45</td><td class=''>05/07 09:50:52<br/>→ 09:50:54</td><td class=''>多</td><td class='neg'>-7</td><td class=''>2s</td><td class=''>急跌中提前接多</td><td class=''>提前/追尾试单</td><td class=''>10 / 0</td><td class=''>22 / 0</td><td class=''>27.1s<br/><span class='small'>平仓后</span></td><td class=''>亏损/MAE 70.0%<br/>亏损/MAE30 31.8%</td><td class=''><span class='badge b-good'>止损及时</span></td><td class=''>止损后规避 15</td></tr>
+<tr><td class=''>46</td><td class=''>05/07 10:07:36<br/>→ 10:08:14</td><td class=''>多</td><td class='pos'>8</td><td class=''>38s</td><td class=''>低位反弹多</td><td class=''>急跌/低位反弹多</td><td class=''>8 / 8</td><td class=''>8 / 15</td><td class=''>40.2s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 53.3%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 7</td></tr>
+<tr><td class=''>47</td><td class=''>05/08 08:51:46<br/>→ 08:52:51</td><td class=''>多</td><td class='pos'>9</td><td class=''>1m05s</td><td class=''>低位横住微确认多</td><td class=''>急跌/低位反弹多</td><td class=''>5 / 9</td><td class=''>5 / 11</td><td class=''>77.2s<br/><span class='small'>平仓后</span></td><td class=''>MFE捕获 100.0%<br/>MFE30捕获 81.8%</td><td class=''><span class='badge b-good'>接近最佳</span></td><td class=''>回吐 0<br/>平后额外 2</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>十一、最终结论与下一步</h2>
+<div class="grid3">
+<div class="card"><h3>保留</h3><p>低位横住微确认多、急跌后目标区反弹多、反弹高位失败空。这些是目前最有正期望的核心结构。</p></div>
+<div class="card"><h3>压缩</h3><p>无微确认第一下、MAE大且MFE接近0的单子。它们贡献了大部分异常亏损。</p></div>
+<div class="card"><h3>优化</h3><p>止盈方面不是一味多拿，而是区分早退和等过头：强结构单可多等5-15秒，盈利明显出现后要有回吐保护。</p></div>
+</div>
+<ul>
+<li>建议日报固定加入：止盈区间表、止损区间表、MAE/MFE表、MFE30捕获率、亏损/MAE30比例。</li>
+<li>建议每笔继续打标签：观察区、tick/L2微确认、入场后MAE是否结构内、出场是早退/接近最佳/回吐。</li>
+<li>若某类交易长期表现为MAE大、MFE低、期望为负，应从主力模型中降级。</li>
+</ul>
+</section>
+
+<div class="footer">生成口径：用户交易记录 + Dukascopy Tick数据。报告用于复盘，不构成投资建议。</div>
+</div></body></html>
